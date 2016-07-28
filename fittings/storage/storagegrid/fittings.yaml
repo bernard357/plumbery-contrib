@@ -144,6 +144,28 @@ blueprints:
             glue:
               - primary .101
               - internet icmp 22 80 443
+              - StoragegridVLAN2 vmxnet3
+              - StoragegridVLAN3 vmxnet3
+              - StoragegridVLAN4 vmxnet3
+
+  - network-2:
+
+    ethernet:
+      name: StoragegridVLAN2
+      subnet: 172.16.0.0
+
+  - network-3:
+
+    ethernet:
+      name: StoragegridVLAN3
+      subnet: 172.17.0.0
+
+  - network-4:
+
+    ethernet:
+      name: StoragegridVLAN4
+      subnet: 172.18.0.0
+
 
   - beachhead:
 
