@@ -263,11 +263,11 @@ defaults:
                 <description>Execution framework</description>
             </property>
 
-      - path: /opt/hadoop/etc/hadoop/masters
+      - path: /root/opt-hadoop-etc-hadoop-masters
         content: |
             {{ master1.public }}
 
-      - path: /opt/hadoop/etc/hadoop/slaves
+      - path: /root/opt-hadoop-etc-hadoop-slaves
         content: |
             {{ slave1.public }}
             {{ slave2.public }}
@@ -330,6 +330,9 @@ defaults:
       - sed -e '/<configuration>/r /root/yarn-site.update' etc/hadoop/yarn-site.xml.original >etc/hadoop/yarn-site.xml
 
       - sed -e '/<configuration>/r /root/mapred-site.update' etc/hadoop/mapred-site.xml.template >etc/hadoop/mapred-site.xml
+
+      - cp /root/opt-hadoop-etc-hadoop-masters /opt/hadoop/etc/hadoop/masters
+      - cp /root/opt-hadoop-etc-hadoop-slaves /opt/hadoop/etc/hadoop/slaves
 
       - chown -R ubuntu:ubuntu /opt/hadoop
 
