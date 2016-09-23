@@ -30,7 +30,7 @@ parameters:
     default: bigbluebutton
 
 links:
-  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/applications/bigbluebutton
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/collaboration/bigbluebutton
   credit: http://docs.bigbluebutton.org/install/install.html
 
 defaults:
@@ -60,7 +60,7 @@ locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
-  - itop:
+  - microservice:
 
       domain:
         name: "{{ parameter.domainName }}"
