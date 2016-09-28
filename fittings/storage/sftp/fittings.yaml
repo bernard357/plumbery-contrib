@@ -1,0 +1,149 @@
+---
+
+information:
+  - "Secured storage with SFTP (SSH File Transfer Protocol)"
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU8
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: SftpFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: SftpNetwork
+
+  nodeName:
+    information:
+      - "the name of the main node to be deployed"
+    type: str
+    default: sftp01
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/storage/sftp
+
+defaults:
+
+  cloud-config:
+
+    ssh_keys:
+      rsa_private: |
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
+
+    users:
+      - default
+
+      - name: ubuntu
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+      - name: share
+
+    disable_root: true
+    ssh_pwauth: true
+
+    chpasswd:
+      list: |
+        share:{{ secret.password }}
+      expire: False
+
+---
+
+locationId: "{{ parameter.locationId }}"
+
+blueprints:
+
+  - sftp:
+
+      domain:
+        name: "{{ parameter.domainName }}"
+        service: essentials
+        ipv4: 2
+
+      ethernet:
+        name: "{{ parameter.networkName }}"
+        subnet: 192.168.20.0
+
+      nodes:
+
+        - "{{ parameter.nodeName }}":
+
+            information:
+              - "to access shared files:"
+              - "sftp share@{{ node.public }}"
+              - "password is '{{ secret.password }}'"
+              - "or use FileZilla for visual interface:"
+              - "Host: {{ node.public }}"
+              - "Protocol: SFTP"
+              - "Logon Type: Normal"
+              - "User: share"
+              - "Password: {{ secret.password }}"
+
+            appliance: 'Ubuntu 14'
+            cpu: 2
+            memory: 4
+
+            disks:
+              - 1 50 standard
+
+            monitoring: essentials
+
+            glue:
+              - internet 22
+
+            cloud-config:
+
+              write_files:
+
+                - path: /home/share/files/hello.txt
+                  content: |
+                    hello world!
+
+                - path: /root/sshd_config
+                  content: |
+                    Match User share
+                        ChrootDirectory /home/share
+                        ForceCommand internal-sftp
+                        AllowTCPForwarding no
+                        X11Forwarding no
+
+              packages:
+                - ntp
+
+              runcmd:
+
+                - echo "===== Growing LVM with added disk"
+                - pvcreate /dev/sdb
+                - vgextend rootvol00 /dev/sdb
+                - lvextend -l +100%FREE /dev/mapper/rootvol00-rootlvol00
+                - resize2fs /dev/mapper/rootvol00-rootlvol00
+
+                - echo "===== Handling ubuntu identity"
+                - cp -n /etc/ssh/ssh_host_rsa_key /home/ubuntu/.ssh/id_rsa
+                - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
+                - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
+                - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+                - echo "===== Configuring remote sftp access"
+                - cp -n /etc/ssh/sshd_config /etc/ssh/sshd_config.original
+                - cat /etc/ssh/sshd_config.original /root/sshd_config >/etc/ssh/sshd_config
+                - sed -i "/Subsystem sftp/s/^.*$/Subsystem sftp internal-sftp/" /etc/ssh/ssh_config
+                - /etc/init.d/ssh restart
+
+                - echo "===== Preparing sharing area"
+                - chown -R root:root /home/share
+                - mkdir -p /home/share/files
+                - chown -R share:share /home/share/files
