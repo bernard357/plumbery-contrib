@@ -32,6 +32,7 @@
 
 ## DevOps services
 
+- [Puppet server, and 2 hosts configured by the server](devops/puppet)
 - [GitLab Community Edition and Samba server, core internal services for developers](devops/gitlab)
 - [Stackstorm server, event-based Ops](devops/stackstorm)
 - [Plumbery in the cloud, with all reference fittings plans](example/plumbery)

@@ -48,8 +48,8 @@ In other terms, this use case demonstrates practical infrastructure-as-code, boo
 
     $ python -m plumbery fittings.yaml deploy
 
-This command will build fittings as per the provided plan, start the server
-and bootstrap it. Look at messages displayed by plumbery while it is
+This command will build fittings as per the provided plan, start nodes
+and bootstrap them. Look at messages displayed by plumbery while it is
 working, so you can monitor what's happening.
 
 ## Follow-up commands
