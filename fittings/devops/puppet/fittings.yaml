@@ -1,0 +1,283 @@
+---
+
+information:
+  - "Puppet server, and 2 hosts configured by the server"
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU6
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: PuppetFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: PuppetNetwork
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/devops/puppet
+  credit: https://docs.puppet.com/puppetserver/2.6/install_from_packages.html#ubuntu
+
+defaults:
+
+  domain:
+    name: "{{ parameter.domainName }}"
+    ipv4: auto
+
+  ethernet:
+    name: "{{ parameter.networkName }}"
+    subnet: 10.70.0.0
+
+  puppet-master:  # lord of this world
+
+    description: "Puppet master node"
+
+    information:
+      - "connect remotely:"
+      - "ssh ubuntu@{{ node.public }}"
+      - "check certified agent:"
+      - "sudo /opt/puppetlabs/bin/puppet cert list --all"
+
+    appliance: 'Ubuntu 14'
+
+    cpu: 2
+    memory: 3
+
+    disks:
+      - "1 50 standard"
+
+    glue:
+      - internet icmp 22
+
+    monitoring: essentials
+
+    cloud-config:
+
+      write_files:
+
+        - path: /etc/puppetlabs/code/environments/production/manifests/site.pp
+          content: |
+
+              node 'host1' {    # applies only to this host
+
+                  $str = "<html>
+                      <head>
+                       <title>Hello World</title>
+                      </head>
+                      <body>
+                      <h1>Hello World</h1>
+                        <p>This is a warm welcome from Puppet and plumbery</p>
+                      </body>
+                     </html>
+                     "
+
+                  file {'/var/www/html/index.html':    # change Apache2 home page
+                    ensure => present, # make sure it exists
+                    mode => '0644',
+                    content => $str,
+
+                  }
+
+                  file {'/home/ubuntu/hello.txt':    # resource type file and filename
+                    ensure => present, # make sure it exists
+                    mode => '0644',
+                    content => "Hello World, by Puppet.\n",
+                  }
+
+              }
+
+              node 'host2' {    # applies only to this host
+
+                  tomcat::install { '/opt/tomcat':
+                    source_url => 'https://www-us.apache.org/dist/tomcat/tomcat-7/v7.0.72/bin/apache-tomcat-7.0.72.tar.gz',
+                  }
+
+                  tomcat::instance {  'default':
+                    catalina_home => '/opt/tomcat',
+                  }
+
+                  tomcat::config::server { 'default':
+                    catalina_base => '/opt/tomcat6',
+                    port          => '8080',
+                  }
+
+                  file {'/home/ubuntu/special.txt':    # resource type file and filename
+                    ensure => present, # make sure it exists
+                    mode => '0644',
+                    content => "This is just for me because I'm special.\n",
+                  }
+
+                }
+
+      runcmd:
+
+        - echo "===== Enabling the official Puppet Labs collection repository"
+        - wget https://apt.puppetlabs.com/puppetlabs-release-pc1-trusty.deb
+        - dpkg -i puppetlabs-release-pc1-trusty.deb
+        - apt-get update
+
+        - echo "===== Installing the Puppet Server package"
+        - apt-get -y install puppetserver
+
+        - echo "===== Configuring Puppet run-time"
+        - sed -i "s/-Xms2g -Xmx2g/-Xms512m -Xmx512m/" /etc/default/puppetserver
+
+        - echo "===== Starting Puppet Server"
+        - service puppetserver restart
+        - /opt/puppetlabs/bin/puppet resource service puppetserver ensure=running enable=true
+
+        - echo "===== Installing additional Puppet modules"
+        - /opt/puppetlabs/bin/puppet module install puppetlabs-tomcat
+
+
+  puppet-agent:  # get configuration from puppet server
+
+    description: "Puppet agent node"
+
+    information:
+      - "connect remotely:"
+      - "ssh ubuntu@{{ node.public }}"
+      - "check Puppet configuration:"
+      - "sudo /opt/puppetlabs/bin/puppet agent --test"
+
+    appliance: 'Ubuntu 14'
+
+    cpu: 2
+    memory: 3
+
+    disks:
+      - "1 50 standard"
+
+    glue:
+      - internet icmp 22 80 8080
+
+    monitoring: essentials
+
+    cloud-config:
+
+      packages:
+        - default-jre
+
+      runcmd:
+
+        - echo "===== Enabling the official Puppet Labs collection repository"
+        - wget https://apt.puppetlabs.com/puppetlabs-release-pc1-trusty.deb
+        - dpkg -i puppetlabs-release-pc1-trusty.deb
+        - apt-get update
+
+        - echo "===== Installing the Puppet Agent package"
+        - apt-get -y install puppet-agent
+
+        - echo "===== Launching the agent"
+        - sleep 1m
+        - /opt/puppetlabs/bin/puppet agent --test
+
+        - echo "===== Pairing the agent with server"
+        - ssh -i /home/ubuntu/.ssh/id_rsa ubuntu@puppet "sudo /opt/puppetlabs/bin/puppet cert sign {{ node.name }}"
+
+        - echo "===== Starting the continuous configuration process"
+        - /opt/puppetlabs/bin/puppet resource service puppet ensure=running enable=true
+        - /opt/puppetlabs/bin/puppet agent --test
+
+        - echo "===== Checking Puppet facts"
+        - /opt/puppetlabs/bin/facter
+
+  cloud-config:  # apply to all nodes
+
+    hostname: "{{ node.name }}"
+
+    write_files:
+
+      - path: /root/hosts.awk
+        content: |
+          #!/usr/bin/awk -f
+          /^{{ puppet.private }}/ {next}
+          /^{{ host1.private }}/ {next}
+          /^{{ host2.private }}/ {next}
+          {print}
+          END {
+           print "{{ puppet.private }}    puppet"
+           print "{{ host1.private }}    host1"
+           print "{{ host2.private }}    host2"
+          }
+
+    packages:
+      - ntp
+
+    runcmd:
+
+      - echo "===== Growing LVM with added disk"
+      - pvcreate /dev/sdb
+      - vgextend rootvol00 /dev/sdb
+      - lvextend -l +100%FREE /dev/mapper/rootvol00-rootlvol00
+      - resize2fs /dev/mapper/rootvol00-rootlvol00
+
+      - echo "===== Updating /etc/hosts"
+      - cp -n /etc/hosts /etc/hosts.original
+      - awk -f /root/hosts.awk /etc/hosts >/etc/hosts.new && mv /etc/hosts.new /etc/hosts
+      - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+      - echo "===== Handling ubuntu identity"
+      - cp -n /etc/ssh/ssh_host_rsa_key /home/ubuntu/.ssh/id_rsa
+      - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
+      - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
+
+    ssh_keys:
+      rsa_private: |
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
+
+    users:
+      - default
+
+      - name: ubuntu
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+    disable_root: true
+    ssh_pwauth: false
+
+---
+
+locationId: "{{ parameter.locationId }}"
+
+blueprints:
+
+  - master:
+
+      nodes:
+
+        - puppet:
+            default: puppet-master
+
+  - agents:
+
+      nodes:
+
+        - host1:
+            default: puppet-agent
+
+            information:
+              - "set by Puppet:"
+              - "cat /home/ubuntu/hello.txt"
+              - "Apache server at http://{{ node.public }}"
+
+        - host2:
+            default: puppet-agent
+
+            information:
+              - "set by Puppet:"
+              - "cat /home/ubuntu/special.txt"
+              - "Tomcat server at http://{{ node.public }}:8080"
+
