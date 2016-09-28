@@ -72,6 +72,11 @@ The file `/home/ubuntu/hello.txt` is set remotely from 'puppet'.
 
 ![host1 shell](host1.png)
 
+Open a browser window and paste the public link for 'host1' that is reported by plumbery.
+This demonstrates that Apache has been successfully configured by Puppet.
+
+![apache](apache.png)
+
 Ok, fine, now move on to 'host2' and do the same, but with a more ambitious configuration.
 This is because 'puppet' has special instructions for 'host2'.
 
