@@ -1,0 +1,172 @@
+---
+
+information:
+  - "Jenkins automation server"
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU6
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: JenkinsFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: JenkinsNetwork
+
+  cpuPerNode:
+    information:
+      - "the quantity of CPU given to each node"
+    type: [4..32]
+    default: 4
+
+  memoryPerNode:
+    information:
+      - "the quantity of RAM given to each node, in GB"
+    type: [8..256]
+    default: 8
+
+  diskPerNode:
+    information:
+      - "the quantity of storage given to each node, in GB"
+    type: [100..1000]
+    default: 100
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/devops/jenkins
+  credit: https://jenkins.io/download/
+
+defaults:
+
+  domain:
+    name: "{{ parameter.domainName }}"
+    ipv4: auto
+
+  ethernet:
+    name: "{{ parameter.networkName }}"
+    subnet: 10.90.0.0
+
+  jenkins-node:  # deploy as much horsepower as needed
+
+    information:
+      - "connect remotely to read random secret:"
+      - "ssh ubuntu@{{ node.public }}"
+      - "sudo cat /var/lib/jenkins/secrets/initialAdminPassword"
+      - "access the web interface:"
+      - "http://{{ node.public }}:8080"
+
+    appliance: 'Ubuntu 14'
+
+    cpu: "{{ parameter.cpuPerNode }}"
+    memory: "{{ parameter.memoryPerNode }}"
+
+    disks:
+      - "1 {{ parameter.diskPerNode }} standard"
+
+    glue:
+      - internet icmp 22 8080
+
+    monitoring: essentials
+
+  cloud-config:  # apply to all nodes
+
+    hostname: "{{ node.name }}"
+
+    write_files:
+
+      - path: /root/hosts.awk
+        content: |
+          #!/usr/bin/awk -f
+          /^{{ jenkins1.private }}/ {next}
+          /^{{ jenkins1.ipv6 }}/ {next}
+          {print}
+          END {
+           print "{{ jenkins1.private }}    jenkins1"
+           print "{{ jenkins1.ipv6 }}    jenkins1"
+          }
+
+    bootcmd:
+      - apt-get remove apache2 -y
+      - apt-get autoremove -y
+
+      # automate acceptance of oracle licence
+      - echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | sudo debconf-set-selections
+      - echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 seen true" | sudo debconf-set-selections
+
+    apt_sources:
+      - source: "ppa:webupd8team/java"
+
+    packages:
+      - ntp
+      - oracle-java8-installer
+      - oracle-java8-set-default
+
+    runcmd:
+
+      - echo "===== Growing LVM with added disk"
+      - pvcreate /dev/sdb
+      - vgextend rootvol00 /dev/sdb
+      - lvextend -l +100%FREE /dev/mapper/rootvol00-rootlvol00
+      - resize2fs /dev/mapper/rootvol00-rootlvol00
+
+      - echo "===== Updating /etc/hosts"
+      - cp -n /etc/hosts /etc/hosts.original
+      - awk -f /root/hosts.awk /etc/hosts >/etc/hosts.new && mv /etc/hosts.new /etc/hosts
+      - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+      - echo "===== Handling ubuntu identity"
+      - cp -n /etc/ssh/ssh_host_rsa_key /home/ubuntu/.ssh/id_rsa
+      - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
+      - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
+
+      - echo "===== Checking Java"
+      - java -version
+
+      - echo "===== Installing Jenkins"
+      - wget -q -O - https://pkg.jenkins.io/debian/jenkins-ci.org.key | sudo apt-key add -
+      - sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+      - apt-get update
+      - apt-get install -y jenkins
+
+      - echo "===== Use following password in web interface"
+      - cat /var/lib/jenkins/secrets/initialAdminPassword
+
+    ssh_keys:
+      rsa_private: |
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
+
+    users:
+      - default
+
+      - name: ubuntu
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+    disable_root: true
+    ssh_pwauth: false
+
+---
+
+locationId: "{{ parameter.locationId }}"
+
+blueprints:
+
+  - jenkins:
+
+      nodes:
+
+        - jenkins1:
+            default: jenkins-node
+
