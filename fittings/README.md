@@ -72,6 +72,7 @@
 
 ## Storage services
 
+- [Secured storage with SFTP (SSH File Transfer Protocol)](storage/sftp)
 - [GlusterFS cluster of 3 nodes](storage/glusterfs)
 - [Cluster of Ceph servers providing S3-like storage](storage/ceph)
 - [NFS server and client over IPv6 back-end network](storage/nfs)
