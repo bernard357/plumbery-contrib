@@ -79,6 +79,6 @@ Launch following command to remove all resources involved in the fittings plan:
 
 ## See also
 
-- [Example with plumbery](../)
+- [DevOps services with plumbery](../)
 - [All plumbery fittings plans](../../)
 
