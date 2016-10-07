@@ -31,7 +31,7 @@ parameters:
 
 links:
   documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/storage/glusterfs
-  credit: https://wiki.centos.org/HowTos/GlusterFSonCentOS
+  credit: http://gluster.readthedocs.io/en/latest/Quick-Start-Guide/Quickstart/
 
 defaults:
 
@@ -74,14 +74,14 @@ defaults:
       - path: /root/hosts.awk
         content: |
           #!/usr/bin/awk -f
-          /^{{ node1.private }}/ {next}
-          /^{{ node2.private }}/ {next}
-          /^{{ node3.private }}/ {next}
+          /^{{ gluster-node1.private }}/ {next}
+          /^{{ gluster-node2.private }}/ {next}
+          /^{{ gluster-node3.private }}/ {next}
           {print}
           END {
-           print "{{ node1.private }}    node1"
-           print "{{ node2.private }}    node2"
-           print "{{ node3.private }}    node3"
+           print "{{ gluster-node1.private }}    gluster-node1"
+           print "{{ gluster-node2.private }}    gluster-node2"
+           print "{{ gluster-node3.private }}    gluster-node3"
           }
 
       - path: /root/set_vdisk.sh
@@ -117,14 +117,13 @@ defaults:
 
       - echo "===== Installing GlusterFS"
       - yum update -y
-      - yum install -y wget
-      - yum install -y http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-      - wget -P /etc/yum.repos.d/ http://download.gluster.org/pub/gluster/glusterfs/LATEST/CentOS/glusterfs-epel.repo
+      - yum install -y centos-release-gluster
       - yum install -y glusterfs-server samba
 
       - echo "===== Starting GlusterFS daemon"
-      - systemctl enable glusterd.service
-      - systemctl start glusterd.service
+      - systemctl enable glusterd
+      - systemctl start glusterd
+      - systemctl status glusterd
 
       - echo "===== Configuring local storage for GlusterFS"
       - chmod +x /root/set_vdisk.sh
@@ -168,7 +167,7 @@ blueprints:
 
       nodes:
 
-        - node1:
+        - gluster-node1:
             default: glusterfs-node
 
             cloud-config:
@@ -177,11 +176,11 @@ blueprints:
 
                 - echo "===== Configuring the GlusterFS trusted pool"
                 - sleep 2m
-                - gluster peer probe node2
+                - gluster peer probe gluster-node2
 
                 - echo "===== Creating shared volume"
                 - sleep 1m
-                - gluster volume create volume1 replica 2 node1:/bricks/brick1/volume1 node2:/bricks/brick1/volume1
+                - gluster volume create volume1 replica 2 gluster-node1:/bricks/brick1/volume1 gluster-node2:/bricks/brick1/volume1
 
                 - echo "===== Starting shared volume"
                 - gluster volume start volume1
@@ -190,24 +189,24 @@ blueprints:
                 - gluster volume info
 
                 - echo "===== Testing shared volume"
-                - mount -t glusterfs node1:/volume1 /mnt
+                - mount -t glusterfs gluster-node1:/volume1 /mnt
                 - echo "hello world" | tee /mnt/welcome.txt
                 - cat /bricks/brick1/volume1/welcome.txt
 
                 - echo "===== Expanding the cluster"
-                - gluster peer probe node3
+                - gluster peer probe gluster-node3
                 - sleep 30
-                - gluster volume add-brick volume1 replica 3 node3:/bricks/brick1/volume1
+                - gluster volume add-brick volume1 replica 3 gluster-node3:/bricks/brick1/volume1
 
                 - echo "===== Adding another volume"
-                - gluster volume create volume2 replica 3 node1:/bricks/brick2/volume2 node2:/bricks/brick2/volume2 node3:/bricks/brick2/volume2
+                - gluster volume create volume2 replica 3 gluster-node1:/bricks/brick2/volume2 gluster-node2:/bricks/brick2/volume2 gluster-node3:/bricks/brick2/volume2
                 - gluster volume start volume2
 
                 - echo "===== Checking cluster status"
                 - gluster volume info
                 - gluster peer status
 
-        - node2:
+        - gluster-node2:
             default: glusterfs-node
 
             cloud-config:
@@ -216,7 +215,7 @@ blueprints:
 
                 - echo "===== Configuring the GlusterFS trusted pool"
                 - sleep 2m
-                - gluster peer probe node1
+                - gluster peer probe gluster-node1
 
-        - node3:
+        - gluster-node3:
             default: glusterfs-node
