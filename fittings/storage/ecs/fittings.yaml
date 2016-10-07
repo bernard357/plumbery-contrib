@@ -1,7 +1,7 @@
 ---
 
 information:
-  - "EMC Elastic Cloud Storage, for development"
+  - "EMC Elastic Cloud Storage (ECS), for development"
 
 parameters:
 
@@ -43,7 +43,7 @@ parameters:
 
 links:
   documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/storage/ecs
-  credit: https://github.com/EMCECS/ECS-CommunityEdition/blob/master/Documentation/ECS-MultiNode-Instructions.md
+  credit: https://github.com/EMCECS/ECS-CommunityEdition/blob/master/Documentation/ECS-SingleNode-Instructions.md
 
 defaults:
 
@@ -82,16 +82,10 @@ defaults:
       - path: /root/hosts.awk
         content: |
           #!/usr/bin/awk -f
-          /^{{ node1.private }}/ {next}
-          /^{{ node2.private }}/ {next}
-          /^{{ node3.private }}/ {next}
-          /^{{ node4.private }}/ {next}
+          /^{{ ecs-node.private }}/ {next}
           {print}
           END {
-           print "{{ node1.private }}    node1"
-           print "{{ node2.private }}    node2"
-           print "{{ node3.private }}    node3"
-           print "{{ node4.private }}    node4"
+           print "{{ ecs-node.private }}    ecs-node"
           }
 
       # use docker repo
@@ -99,7 +93,7 @@ defaults:
         content: |
           [dockerrepo]
           name=Docker Repository
-          baseurl=https://yum.dockerproject.org/repo/main/centos/$releasever/
+          baseurl=https://yum.dockerproject.org/repo/main/centos/7/
           enabled=1
           gpgcheck=1
           gpgkey=https://yum.dockerproject.org/gpg
@@ -120,11 +114,15 @@ defaults:
       - systemctl stop firewalld
       - systemctl disable firewalld
 
+      - yum install docker-engine
+      - systemctl enable docker.service
+      - systemctl start docker
+
       - echo "===== Installing ECS and formatting disk"
       - cd /home/centos
-      - git clone https://github.com/EMCECS/ECS-CommunityEdition.git
-      - cd ECS-CommunityEdition/ecs-multi-node/
-      - "python step1_ecs_multinode_install.py --ips {{ node1.private }} {{ node2.private }} {{ node3.private }} {{ node4.private }}  --hostnames node1 node2 node3 node4 --ethadapter ens32 --disks sdb"
+      - git clone https://github.com/bernard357/ECS-CommunityEdition
+      - cd ECS-CommunityEdition/ecs-single-node
+      - "python step1_ecs_singlenode_install.py  --hostname {{ node.name }}  --ethadapter eno16777728 --disks sdb"
 
     ssh_keys:
       rsa_private: |
@@ -141,7 +139,7 @@ defaults:
           - "{{ rsa_public.local }}"
 
     disable_root: true
-    ssh_pwauth: true
+    ssh_pwauth: false
 
 ---
 
@@ -153,7 +151,7 @@ blueprints:
 
       nodes:
 
-        - node1:
+        - ecs-node:
             default: ecs-node
 
             information:
@@ -163,21 +161,12 @@ blueprints:
               - "cat /var/log/cloud-init-output.log"
 
             glue:
-              - internet 22 443 9020 9024 4443 9011 9101
+              - internet 22 443 4443 9020 9021 9024 9025 9101
 
             cloud-config:
 
               runcmd:
 
-                - echo "===== Waiting for cluster to converge"
-                - sleep 7m
-
                 - echo "===== Configuring ECS object store"
-                - cd /home/centos/ECS-CommunityEdition/ecs-multi-node/
-                - "python step2_object_provisioning.py --ECSNodes={{ node1.private }},{{ node2.private }},{{ node3.private }},{{ node4.private }} --Namespace=ns1 --ObjectVArray=ova1 --ObjectVPool=ovp1 --UserName=emccode --DataStoreName=ds1 --VDCName=vdc1 --MethodName="
-
-        - node[2..4]:
-            default: ecs-node
-
-            glue:
-              - internet 22
+                - cd /home/centos/ECS-CommunityEdition/ecs-single-node
+                - "python step2_object_provisioning.py --ECSNodes={{ node.private }} --Namespace=ns1 --ObjectVArray=ova1 --ObjectVPool=ovp1 --UserName=emccode --DataStoreName=ds1 --VDCName=vdc1 --MethodName="
