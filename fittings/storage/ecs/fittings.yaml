@@ -88,16 +88,6 @@ defaults:
            print "{{ ecs-node.private }}    ecs-node"
           }
 
-      # use docker repo
-      - path: /etc/yum.repos.d/docker.repo
-        content: |
-          [dockerrepo]
-          name=Docker Repository
-          baseurl=https://yum.dockerproject.org/repo/main/centos/7/
-          enabled=1
-          gpgcheck=1
-          gpgkey=https://yum.dockerproject.org/gpg
-
     runcmd:
 
       - echo "===== Handling centos identity"
@@ -114,8 +104,9 @@ defaults:
       - systemctl stop firewalld
       - systemctl disable firewalld
 
-      - yum install docker-engine
-      - systemctl enable docker.service
+      - echo "===== Installing Docker Engine"
+      - curl -sSL https://get.docker.com/ | sh
+      - systemctl enable docker
       - systemctl start docker
 
       - echo "===== Installing ECS and formatting disk"
@@ -158,7 +149,10 @@ blueprints:
               - "this is a ECS node from EMC, for development only"
               - "get secret keys with following commands:"
               - "ssh centos@{{ node.public }}"
-              - "cat /var/log/cloud-init-output.log"
+              - "grep SecretKey /var/log/cloud-init-output.log"
+              - "then connect to the ECS console at:"
+              - "https://{{ node.public }}"
+              - "with name: root and password: ChangeMe"
 
             glue:
               - internet 22 443 4443 9020 9021 9024 9025 9101
