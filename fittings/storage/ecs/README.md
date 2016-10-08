@@ -3,6 +3,13 @@
 The objective of this use case is to deploy a EMC ECS node at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
 This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
 
+[EMC Elastic Cloud Storage (ECS)](https://www.emc.com/storage/ecs/solutions.htm) brings all the benefits of a public cloud to your own datacenter while keeping your cost under control. It can be used for a wide variety of workloads such as deep archive, geo protection of Hadoop, Internet of Things and many more.
+ECS offers universal accessibility with support for industry standard object APIs (Amazon S3, OpenStack Swift, EMC’s Atmos & CAS) and HDFS interfaces. ECS provides a flexible platform to create and integrate an infinite number of modern applications.
+
+![architecture](architecture.png)
+
+Here we deploy a single node ECS, as a virtual machine, that is provided free of license with no time limit for non-production use. In about 30 minutes you can can get a fully-functional ECS back-end, then code and test cloud applications, access a broad range of object API’s like S3 and OpenStack, or deploy a proof of concept (POC) environment.
+
 ## Requirements for this use case
 
 * Select a MCP location
@@ -99,7 +106,7 @@ Launch following command to remove all resources involved in the fittings plan:
 
 ## Use case status
 
-- [ ] Work as expected
+- [x] Work as expected
 
 ## See also
 
