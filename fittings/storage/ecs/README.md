@@ -1,4 +1,4 @@
-# Elastic Cloud Storage (ECS) from EMC, providing S3-like storage
+# EMC Elastic Cloud Storage (ECS), for development
 
 The objective of this use case is to deploy a EMC ECS node at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
 This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.

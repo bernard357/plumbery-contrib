@@ -73,6 +73,7 @@
 
 ## Storage services
 
+- [EMC Elastic Cloud Storage (ECS), for development)](storage/ecs)
 - [Secured storage with SFTP (SSH File Transfer Protocol)](storage/sftp)
 - [GlusterFS cluster of 3 nodes](storage/glusterfs)
 - [Cluster of Ceph servers providing S3-like storage](storage/ceph)
