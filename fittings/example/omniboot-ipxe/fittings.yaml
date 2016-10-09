@@ -203,7 +203,7 @@ defaults:
           - "{{ rsa_public.key }}"
           - "{{ rsa_public.local }}"
 
-    disable_root: true
+    disable_root: false
     ssh_pwauth: false
 
 ---

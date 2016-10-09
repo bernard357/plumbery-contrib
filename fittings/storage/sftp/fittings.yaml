@@ -52,7 +52,7 @@ defaults:
 
       - name: share
 
-    disable_root: true
+    disable_root: false
     ssh_pwauth: true
 
     chpasswd:
