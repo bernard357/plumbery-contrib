@@ -94,7 +94,7 @@ defaults:
 
         - echo "===== Downloading FreeBSD"
         - cd /root
-        - wget -q http://tenet.dl.sourceforge.net/project/osboxes/vms/vmware/FreeBSD/10.3/FreeBSD_10.3-64bit.7z
+        - wget -nv http://tenet.dl.sourceforge.net/project/osboxes/vms/vmware/FreeBSD/10.3/FreeBSD_10.3-64bit.7z
         - ls -la FreeBSD*
 
         - echo "===== Preparing virtual disk"

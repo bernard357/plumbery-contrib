@@ -121,7 +121,7 @@ defaults:
       runcmd:
 
         - echo "===== Enabling the official Puppet Labs collection repository"
-        - wget https://apt.puppetlabs.com/puppetlabs-release-pc1-trusty.deb
+        - wget -nv https://apt.puppetlabs.com/puppetlabs-release-pc1-trusty.deb
         - dpkg -i puppetlabs-release-pc1-trusty.deb
         - apt-get update
 
@@ -170,7 +170,7 @@ defaults:
       runcmd:
 
         - echo "===== Enabling the official Puppet Labs collection repository"
-        - wget https://apt.puppetlabs.com/puppetlabs-release-pc1-trusty.deb
+        - wget -nv https://apt.puppetlabs.com/puppetlabs-release-pc1-trusty.deb
         - dpkg -i puppetlabs-release-pc1-trusty.deb
         - apt-get update
 

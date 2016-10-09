@@ -174,7 +174,7 @@ defaults:
 
         - echo "===== Downloading Debian netboot"
         - cd /root
-        - wget http://ftp.nl.debian.org/debian/dists/jessie/main/installer-amd64/current/images/netboot/netboot.tar.gz
+        - wget -nv http://ftp.nl.debian.org/debian/dists/jessie/main/installer-amd64/current/images/netboot/netboot.tar.gz
 
         - echo "===== Exposing Debian netboot"
         - dtrx -n netboot.tar.gz

@@ -76,7 +76,7 @@ defaults:
 
         - echo "===== Downloading pfSense"
         - cd /root
-        - wget -q https://frafiles.pfsense.org/mirror/downloads/pfSense-CE-memstick-2.3.1-RELEASE-amd64.img.gz
+        - wget -nv https://frafiles.pfsense.org/mirror/downloads/pfSense-CE-memstick-2.3.1-RELEASE-amd64.img.gz
         - ls -la pfSense*
 
         - echo "===== Extracting the ISO file to secondary hard drive"
