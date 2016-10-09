@@ -24,6 +24,9 @@ categories:
   - directory: logging
     name: Logging
     description: "Logging and log collection, retention applications"
+  - directory: multicloud
+    name: Multiple clouds
+    description: "Deploy on multiple cloud platforms"
   - directory: networking
     name: Networking
     description: "Networking applications"
