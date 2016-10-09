@@ -1,0 +1,197 @@
+---
+
+information:
+  - "Enterprise-class container registry server with VMware Harbor"
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU6
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: HarborFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: HarborNetwork
+
+  nodeName:
+    information:
+      - "the name of the main node to be deployed"
+    type: str
+    default: harbor01
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/containers/harbor
+  credit: https://github.com/vmware/harbor/blob/master/docs/installation_guide.md
+
+defaults:
+
+  # the same network domain is used at various facilities
+  #
+  domain:
+    name: "{{ parameter.domainName }}"
+    description: "Harbor host"
+    service: essentials
+    ipv4: auto
+
+  # the same ethernet configuration is used at various facilities
+  #
+  ethernet:
+    name: "{{ parameter.networkName }}"
+    subnet: 192.168.20.0
+
+  # default settings for a Harbor node
+  #
+  harbor-node:
+
+    description: "#harbor #ubuntu"
+
+    information:
+      - "connect from a browser window:"
+      - "http://{{ node.public }}"
+      - "sign in with user: admin and password: {{ secret.admin_password }}"
+      - "if needed, connect from the command line:"
+      - "ssh ubuntu@{{ node.public }}"
+      - "docker info"
+
+    # plenty of compute power
+    #
+    appliance: 'Ubuntu 14'
+    cpu: 4
+    memory: 8
+
+    # enough storage space
+    #
+    disks:
+      - 1 100 standard
+
+    # make the node accessible from the Internet
+    #
+    glue:
+      - internet 22 80 443 2375 2376
+
+    # allow for monitoring from the global dashboard
+    #
+    monitoring: essentials
+
+    # contextualise this node
+    #
+    cloud-config:
+
+      hostname: "{{ node.name }}"
+
+      packages:
+        - ntp
+
+      write_files:
+
+        - path: /root/hosts.awk
+          content: |
+            #!/usr/bin/awk -f
+            /^{{ node.private }}/ {next}
+            /^{{ node.ipv6 }}/ {next}
+            {print}
+            END {
+             print "{{ node.private }}    {{ node.name }}"
+             print "{{ node.ipv6 }}    {{ node.name }}"
+            }
+
+        - path: /root/docker.sed
+          content: |
+            #!/usr/bin/sed
+            /DOCKER_OPTS/s/^.*$/DOCKER_OPTS="-H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375 --dns 8.8.8.8 --dns 8.8.4.4"/
+
+        - path: /root/harbor.sed
+          content: |
+            #!/usr/bin/sed
+            /hostname/s/^.*$/hostname = {{ node.name }}/
+            /db_password/s/^.*$/db_password = {{ secret.sql_password }}/
+            /harbor_admin_password/s/^.*$/harbor_admin_password = {{ secret.admin_password }}/
+            /secret_key/s/^.*$/secret_key = {{ secret.key }}0123456/
+
+      runcmd:
+
+        - echo "===== Growing LVM with added disk"
+        - pvcreate /dev/sdb
+        - vgextend rootvol00 /dev/sdb
+        - lvextend -l +100%FREE /dev/mapper/rootvol00-rootlvol00
+        - resize2fs /dev/mapper/rootvol00-rootlvol00
+
+        - echo "===== Handling ubuntu identity"
+        - cp -n /etc/ssh/ssh_host_rsa_key /home/ubuntu/.ssh/id_rsa
+        - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
+        - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
+        - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+        - echo "===== Updating /etc/hosts"
+        - cp -n /etc/hosts /etc/hosts.original
+        - awk -f /root/hosts.awk /etc/hosts >/etc/hosts.new && mv /etc/hosts.new /etc/hosts
+
+        - echo "===== Installing Docker Engine"
+        - apt-get remove apache2 -y
+        - apt-get autoremove -y
+        - curl -sSL https://get.docker.com/ | sh
+        - usermod -aG docker ubuntu
+        - docker --version
+
+        - echo "===== Accepting remote connections"
+        - service docker stop
+        - sed -i -f /root/docker.sed /etc/default/docker
+        - service docker start
+
+        - echo "===== Installing Docker Compose"
+        - curl -L https://github.com/docker/compose/releases/download/1.8.1/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+        - chmod +x /usr/local/bin/docker-compose
+        - docker-compose --version
+
+        - echo "===== Downloading VMware Harbor"
+        - cd /home/ubuntu
+        - wget -nv https://github.com/vmware/harbor/releases/download/0.4.1/harbor-online-installer-0.4.1.tgz
+        - tar xvf harbor-online-installer-0.4.1.tgz
+
+        - echo "===== Configuring VMware Harbor"
+        - sed -i -f /root/harbor.sed /home/ubuntu/harbor/harbor.cfg
+
+        - echo "===== Starting VMware Harbor"
+        - cd /home/ubuntu/harbor
+        - ./install.sh
+
+
+  cloud-config:
+
+    ssh_keys:
+      rsa_private: |
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
+
+    users:
+      - default
+
+      - name: ubuntu
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+    disable_root: false
+    ssh_pwauth: false
+
+---
+
+locationId: "{{ parameter.locationId }}"
+
+blueprints:
+
+  - harbor:
+      nodes:
+        - "{{ parameter.nodeName }}":
+            default: harbor-node
