@@ -50,6 +50,12 @@ defaults:
           - "{{ rsa_public.key }}"
           - "{{ rsa_public.local }}"
 
+      - name: root
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
       - name: share
 
     disable_root: false
