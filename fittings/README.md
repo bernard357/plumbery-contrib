@@ -40,6 +40,7 @@
 
 ## Container services
 
+- [Enterprise-class container registry server with VMware Harbor](containers/harbor)
 - [Rancher, a complete platform for running containers](containers/rancher)
 - [Docker node](containers/docker)
 - [Kubernetes node](containers/kubernetes)
