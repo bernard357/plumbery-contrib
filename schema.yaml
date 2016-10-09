@@ -144,7 +144,7 @@ mapping:
                               - type: str
                           "memory":
                             desc: "Amount of RAM in GB"
-                            type: int
+                            type: any
                           "monitoring":
                             type: str
                             enum: ['essentials','advanced']
