@@ -85,6 +85,7 @@
 
 ## Web services
 
+- [File repository with NGINX and rsync over IPv6 and IPv4](web/repository)
 - [Apache web server with PHP (LAMP)](web/apache2)
 - [Linux-Nginx-MySQL-PHP web server (LEMP)](web/lemp)
 - [Node.js web server](web/nodejs)

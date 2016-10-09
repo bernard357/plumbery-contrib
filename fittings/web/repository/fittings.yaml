@@ -1,0 +1,178 @@
+---
+
+information:
+  - "File repository with NGINX and rsync over IPv6 and IPv4"
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU6
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: RepositoryFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: RepositoryNetwork
+
+  nodeName:
+    information:
+      - "the name of the main node to be deployed"
+    type: str
+    default: repository01
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/web/repository
+  credit: https://www.nginx.com/resources/admin-guide/serving-static-content/
+
+defaults:
+
+  cloud-config:
+
+    ssh_keys:
+      rsa_private: |
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
+
+    users:
+      - default
+
+      - name: ubuntu
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+    disable_root: true
+    ssh_pwauth: false
+
+---
+
+locationId: "{{ parameter.locationId }}"
+
+blueprints:
+
+  - lemp:
+
+      domain:
+        name: "{{ parameter.domainName }}"
+        service: essentials
+        ipv4: auto
+
+      ethernet:
+        name: "{{ parameter.networkName }}"
+        subnet: 192.168.33.0
+
+      nodes:
+
+        - "{{ parameter.nodeName }}":
+
+            description: "#web #ubuntu"
+
+            information:
+              - "open a browser at http://{{ node.public }}/ to view it live"
+
+            appliance: 'Ubuntu 14'
+            cpu: 2
+            memory: 4
+
+            disks:
+              - 1 500 standard
+
+            monitoring: essentials
+            glue:
+              - internet 22 80
+
+            cloud-config:
+
+              bootcmd:
+                - apt-get remove apache2 -y
+                - apt-get autoremove -y
+
+              packages:
+                - nginx
+                - lftp
+                - rsync
+                - dtrx
+
+              write_files:
+
+                - path: /etc/nginx/sites-available/default
+                  content: |
+                      server {
+
+                        # serve both from ipv4 and ipv6
+                        listen 80 default_server;
+                        listen [::]:80 default_server ipv6only=on;
+
+                        # serve all requests
+                        server_name ""
+                                    {{ node.public }}
+                                    {{ node.ipv6 }}
+                                    ;
+
+                        # the file store
+                        root /var/www;
+
+                        # list files automatically
+                        autoindex on;
+
+                        # serve as file, directory, error
+                        location / {
+                            try_files $uri $uri/ =404;
+                            sendfile on;
+                        }
+
+                        # serve errors
+                        error_page 404 /404.html;
+                        error_page 500 502 503 504 /50x.html;
+                        location = /50x.html {
+                            root /usr/share/nginx/html;
+                        }
+                      }
+
+                - path: /root/info.html
+                  content: |
+                    <html>
+                     <head>
+                      <title>File repository</title>
+                     </head>
+                     <body>
+                         <h1>File repository</h1>
+                         <p>This is a repository of files that can be downloaded over IPv4 or over IPv6</p>
+                     </body>
+                    </html>
+
+              runcmd:
+
+                - echo "===== Growing LVM with added disk"
+                - pvcreate /dev/sdb
+                - vgextend rootvol00 /dev/sdb
+                - lvextend -l +100%FREE /dev/mapper/rootvol00-rootlvol00
+                - resize2fs /dev/mapper/rootvol00-rootlvol00
+
+                - echo "===== Handling ubuntu identity"
+                - cp -n /etc/ssh/ssh_host_rsa_key /home/ubuntu/.ssh/id_rsa
+                - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
+                - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
+                - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+                - echo "===== Installing web services with NGINX"
+                - mkdir -p /var/www
+                - cp /root/info.html /var/www/
+                - service nginx restart
+
+                - echo "===== Populating the repository"
+                - cd /var/www
+                - wget -nv https://stable.release.core-os.net/amd64-usr/current/coreos_production_iso_image.iso
+                - wget -nv http://tenet.dl.sourceforge.net/project/osboxes/vms/vmware/FreeBSD/10.3/FreeBSD_10.3-64bit.7z
+                - rm -R /var/www/html
+
