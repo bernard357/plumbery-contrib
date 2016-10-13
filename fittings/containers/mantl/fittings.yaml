@@ -102,7 +102,7 @@ defaults:
       - "1 50 standard"
 
     glue:
-      - internet icmp 22 8080 8443 9443 9990
+      - internet icmp 22
 
     monitoring: essentials
 
@@ -123,7 +123,7 @@ defaults:
       - "1 50 standard"
 
     glue:
-      - internet icmp 22 8080 8443 9443 9990
+      - internet icmp 22
 
     monitoring: essentials
 
@@ -228,6 +228,10 @@ defaults:
     disable_root: false
     ssh_pwauth: false
 
+polishers:
+  - ansible:
+      reap: inventory.yaml
+
 ---
 
 locationId: "{{ parameter.locationId }}"
@@ -256,6 +260,10 @@ blueprints:
                 - echo "===== Checking software versions"
                 - pip -V
 
+                - echo "===== Installing plumbery"
+                - pip install plumbery
+                - python -m plumbery -v
+
                 - echo "===== Installing ansible"
                 - pip install ansible markupsafe
                 - ansible --version
@@ -268,6 +276,11 @@ blueprints:
 
                 - echo "===== Waiting for all nodes to be available"
                 - sleep 3m
+
+                - echo "===== Generating the inventory of nodes"
+                - cd /home/centos
+                - wget -nv https://raw.githubusercontent.com/bernard357/plumbery-contrib/master/fittings/containers/mantl/fittings.yaml
+                - python -m plumbery fittings.yaml ansible
 
                 - echo "===== Asking plumbery to generate an inventory for ansible"
                 - ansible all -i inventory.yaml -m ping
