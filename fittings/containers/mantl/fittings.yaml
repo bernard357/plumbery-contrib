@@ -285,7 +285,7 @@ blueprints:
                     export USER="root"
                     export HOME="/root"
                     /usr/bin/expect <<EOF
-                    spawn "/home/centos/mantl/security-setup"
+                    spawn "/opt/mantl/security-setup"
                     expect "Admin Password:"
                     send "{{ secret.mantl }}\r"
                     expect "Confirm:"
@@ -326,7 +326,8 @@ blueprints:
                 - pip install -r requirements.txt
 
                 - echo "===== Configuring Mantl"
-                - sed -i "s|{{ playbook_dir }}/||" sample.yaml
+                - sed -i "s|{{ playbook_dir }}/||" sample.yml
+                - sed "11,44d" roles/common/tasks/main.yml
 
                 - echo "===== Creating security certificates"
                 - /root/security-setup
@@ -347,3 +348,5 @@ blueprints:
 
                 - echo "===== Installing components at all nodes with ansible"
                 - ansible-playbook -i inventory.yaml -e @security.yml sample.yml
+
+#                - ansible-playbook -i inventory.yaml playbooks/reboot-hosts.yml
