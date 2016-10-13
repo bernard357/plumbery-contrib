@@ -1,0 +1,285 @@
+---
+
+information:
+  - "Mantl cluster, with one queen and 7 bees."
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU6
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: MantlFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: MantlNetwork
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/containers/mantl
+
+defaults:
+
+  domain:
+    name: "{{ parameter.domainName }}"
+    description: "Demonstration of a Mantl cluster"
+    ipv4: auto
+
+  ethernet:
+    name: "{{ parameter.networkName }}"
+    subnet: 10.0.0.0
+
+
+  control-node:  # default template for a control node
+
+    description: "#control node #centos #mantl"
+
+    information:
+      - "ssh centos@{{ node.public }}"
+
+    appliance: 'CentOS 7'
+
+    cpu: 4
+    memory: 4
+
+    disks:
+      - "1 50 standard"
+
+    glue:
+      - internet icmp 22 8080 8443 9443 9990
+
+    monitoring: essentials
+
+    cloud-config:
+
+      packages:
+        - expect
+        - git
+
+
+  edge-node:  # default template for an edge node
+
+    description: "#edge node #centos #mantl"
+
+    information:
+      - "ssh centos@{{ node.public }}"
+
+    appliance: 'CentOS 7'
+
+    cpu: 2
+    memory: 2
+
+    disks:
+      - "1 50 standard"
+
+    glue:
+      - internet icmp 22 8080 8443 9443 9990
+
+    monitoring: essentials
+
+
+  kubeworker-node:  # default template for a kubeworker node
+
+    description: "#kubeworker node #centos #mantl"
+
+    information:
+      - "ssh centos@{{ node.public }}"
+
+    appliance: 'CentOS 7'
+
+    cpu: 8
+    memory: 8
+
+    disks:
+      - "1 50 standard"
+
+    glue:
+      - internet icmp 22 8080 8443 9443 9990
+
+    monitoring: essentials
+
+
+  worker-node:  # default template for a worker node
+
+    description: "#worker node #centos #mantl"
+
+    information:
+      - "ssh centos@{{ node.public }}"
+
+    appliance: 'CentOS 7'
+
+    cpu: 8
+    memory: 8
+
+    disks:
+      - "1 50 standard"
+
+    glue:
+      - internet icmp 22 8080 8443 9443 9990
+
+    monitoring: essentials
+
+
+  cloud-config:  # apply to all nodes
+
+    hostname: "{{ node.name }}"
+
+    write_files:
+
+      - path: /root/hosts.awk
+        content: |
+          #!/usr/bin/awk -f
+          /^{{ mantl-control1.public }}/ {next}
+          /^{{ mantl-control1.private }}/ {next}
+          /^{{ mantl-control2.public }}/ {next}
+          /^{{ mantl-control2.private }}/ {next}
+          /^{{ mantl-control3.public }}/ {next}
+          /^{{ mantl-control3.private }}/ {next}
+          /^{{ mantl-edge1.public }}/ {next}
+          /^{{ mantl-edge1.private }}/ {next}
+          /^{{ mantl-kubeworker1.public }}/ {next}
+          /^{{ mantl-kubeworker1.private }}/ {next}
+          /^{{ mantl-kubeworker2.public }}/ {next}
+          /^{{ mantl-kubeworker2.private }}/ {next}
+          /^{{ mantl-worker1.public }}/ {next}
+          /^{{ mantl-worker1.private }}/ {next}
+          /^{{ mantl-worker2.public }}/ {next}
+          /^{{ mantl-worker2.private }}/ {next}
+          /^{{ mantl-worker3.public }}/ {next}
+          /^{{ mantl-worker3.private }}/ {next}
+          {print}
+          END {
+           print "{{ mantl-control1.public }}    mantl-control1"
+           print "{{ mantl-control1.private }}    mantl-control1"
+           print "{{ mantl-control2.public }}    mantl-control2"
+           print "{{ mantl-control2.private }}    mantl-control2"
+           print "{{ mantl-control3.public }}    mantl-control3"
+           print "{{ mantl-control3.private }}    mantl-control3"
+           print "{{ mantl-edge1.public }}    mantl-edge1"
+           print "{{ mantl-edge1.private }}    mantl-edge1"
+           print "{{ mantl-kubeworker1.public }}    mantl-kubeworker1"
+           print "{{ mantl-kubeworker1.private }}    mantl-kubeworker1"
+           print "{{ mantl-kubeworker2.public }}    mantl-kubeworker2"
+           print "{{ mantl-kubeworker2.private }}    mantl-kubeworker2"
+           print "{{ mantl-worker1.public }}    mantl-worker1"
+           print "{{ mantl-worker1.private }}    mantl-worker1"
+           print "{{ mantl-worker2.public }}    mantl-worker2"
+           print "{{ mantl-worker2.private }}    mantl-worker2"
+           print "{{ mantl-worker3.public }}    mantl-worker3"
+           print "{{ mantl-worker3.private }}    mantl-worker3"
+          }
+
+    packages:
+      - ntp
+      - curl
+      - wget
+      - unzip
+
+    runcmd:
+
+      - echo "===== Growing LVM with added disk"
+      - pvcreate /dev/sdb
+      - vgextend centos /dev/sdb
+      - lvextend -l +100%FREE /dev/mapper/centos-root
+      - xfs_growfs /dev/mapper/centos-root
+
+      - echo "===== Handling centos keys"
+      - cp -n /etc/ssh/ssh_host_rsa_key /home/centos/.ssh/id_rsa
+      - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/centos/.ssh/id_rsa.pub
+      - chown centos:centos /home/centos/.ssh/*
+
+      - echo "===== Handling root keys"
+      - cp -n /etc/ssh/ssh_host_rsa_key /root/.ssh/id_rsa
+      - cp -n /etc/ssh/ssh_host_rsa_key.pub /root/.ssh/id_rsa.pub
+      - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+      - echo "===== Updating /etc/hosts"
+      - cp -n /etc/hosts /etc/hosts.original
+      - awk -f /root/hosts.awk /etc/hosts >/etc/hosts.new && mv /etc/hosts.new /etc/hosts
+
+    ssh_keys:
+      rsa_private: |
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
+
+    users:
+      - default
+
+      - name: centos
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+      - name: root
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+    disable_root: false
+    ssh_pwauth: false
+
+---
+
+locationId: "{{ parameter.locationId }}"
+
+blueprints:
+
+  - mantl:
+
+      nodes:
+
+        - mantl-control1:  ## also the ansible control node
+            default: control-node
+
+            cloud-config:
+
+              packages:
+                - epel-release
+                - python-pip
+                - python-crypto-dbg
+                - ansible
+                - markupsafe
+                - git
+
+              runcmd:
+
+                - echo "===== Checking software versions"
+                - pip -V
+
+                - echo "===== Installing ansible"
+                - pip install ansible markupsafe
+                - ansible --version
+
+                - echo "===== Installing Mantl"
+                - cd /home/centos
+                - git clone https://github.com/CiscoCloud/mantl
+                - cd mantl
+                - pip install -r requirements.txt
+
+                - echo "===== Waiting for all nodes to be available"
+                - sleep 3m
+
+                - echo "===== Asking plumbery to generate an inventory for ansible"
+                - ansible all -i inventory.yaml -m ping
+
+#        - mantl-control[2..3]:
+#            default: control-node
+
+        - mantl-edge1:
+            default: edge-node
+
+#        - mantl-kubeworker[1..2]:
+#            default: kubeworker-node
+
+#        - mantl-worker[1..2]:
+#            default: worker-node
