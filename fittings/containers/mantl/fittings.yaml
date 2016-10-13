@@ -249,20 +249,19 @@ blueprints:
 
               packages:
                 - epel-release
-                - python-pip
-                - python-crypto-dbg
-                - ansible
-                - markupsafe
+                - python-devel
+                - openssl-devel
                 - git
 
               runcmd:
 
-                - echo "===== Checking software versions"
+                - echo "===== Installing pip"
+                - yum install -y python-pip
                 - pip -V
 
                 - echo "===== Installing plumbery"
                 - pip install plumbery
-                - python -m plumbery -v
+                - plumbery -v
 
                 - echo "===== Installing ansible"
                 - pip install ansible markupsafe
@@ -280,19 +279,19 @@ blueprints:
                 - echo "===== Generating the inventory of nodes"
                 - cd /home/centos
                 - wget -nv https://raw.githubusercontent.com/bernard357/plumbery-contrib/master/fittings/containers/mantl/fittings.yaml
-                - python -m plumbery fittings.yaml ansible
+                - MCP_USERNAME="{{ credentials.name }}" MCP_PASSWORD="{{ credentials.password }}" plumbery fittings.yaml ansible
 
-                - echo "===== Asking plumbery to generate an inventory for ansible"
+                - echo "===== Checking that all nodes can be reached by ansible"
                 - ansible all -i inventory.yaml -m ping
 
-#        - mantl-control[2..3]:
-#            default: control-node
+        - mantl-control[2..3]:
+            default: control-node
 
         - mantl-edge1:
             default: edge-node
 
-#        - mantl-kubeworker[1..2]:
-#            default: kubeworker-node
+        - mantl-kubeworker[1..2]:
+            default: kubeworker-node
 
-#        - mantl-worker[1..2]:
-#            default: worker-node
+        - mantl-worker[1..2]:
+            default: worker-node
