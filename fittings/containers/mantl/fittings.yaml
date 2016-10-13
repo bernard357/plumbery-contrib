@@ -1,7 +1,7 @@
 ---
 
 information:
-  - "Mantl cluster, with one queen and 7 bees."
+  - "Mantl cluster, with 3 control nodes, 2 edge nodes, 3 Kubernetes worker nodes and 3 generic worker nodes"
 
 parameters:
 
@@ -40,7 +40,7 @@ defaults:
 
   control-node:  # default template for a control node
 
-    description: "#control node #centos #mantl"
+    description: "#control node #mantl"
 
     information:
       - "ssh centos@{{ node.public }}"
@@ -54,7 +54,7 @@ defaults:
       - "1 50 standard"
 
     glue:
-      - internet icmp 22 8080 8443 9443 9990
+      - internet icmp 22 80 443 8080
 
     monitoring: essentials
 
@@ -67,7 +67,7 @@ defaults:
 
   edge-node:  # default template for an edge node
 
-    description: "#edge node #centos #mantl"
+    description: "#edge node #mantl"
 
     information:
       - "ssh centos@{{ node.public }}"
@@ -81,14 +81,14 @@ defaults:
       - "1 50 standard"
 
     glue:
-      - internet icmp 22 8080 8443 9443 9990
+      - internet icmp 22 443 8080
 
     monitoring: essentials
 
 
   kubeworker-node:  # default template for a kubeworker node
 
-    description: "#kubeworker node #centos #mantl"
+    description: "#kubeworker node #mantl"
 
     information:
       - "ssh centos@{{ node.public }}"
@@ -109,7 +109,7 @@ defaults:
 
   worker-node:  # default template for a worker node
 
-    description: "#worker node #centos #mantl"
+    description: "#worker node #mantl"
 
     information:
       - "ssh centos@{{ node.public }}"
@@ -128,7 +128,7 @@ defaults:
     monitoring: essentials
 
 
-  cloud-config:  # apply to all nodes
+  cloud-config:  # default settings for all nodes
 
     hostname: "{{ node.name }}"
 
@@ -137,44 +137,56 @@ defaults:
       - path: /root/hosts.awk
         content: |
           #!/usr/bin/awk -f
-          /^{{ mantl-control1.public }}/ {next}
-          /^{{ mantl-control1.private }}/ {next}
-          /^{{ mantl-control2.public }}/ {next}
-          /^{{ mantl-control2.private }}/ {next}
-          /^{{ mantl-control3.public }}/ {next}
-          /^{{ mantl-control3.private }}/ {next}
-          /^{{ mantl-edge1.public }}/ {next}
-          /^{{ mantl-edge1.private }}/ {next}
-          /^{{ mantl-kubeworker1.public }}/ {next}
-          /^{{ mantl-kubeworker1.private }}/ {next}
-          /^{{ mantl-kubeworker2.public }}/ {next}
-          /^{{ mantl-kubeworker2.private }}/ {next}
-          /^{{ mantl-worker1.public }}/ {next}
-          /^{{ mantl-worker1.private }}/ {next}
-          /^{{ mantl-worker2.public }}/ {next}
-          /^{{ mantl-worker2.private }}/ {next}
-          /^{{ mantl-worker3.public }}/ {next}
-          /^{{ mantl-worker3.private }}/ {next}
+          /^{{ mantl-control-01.public }}/ {next}
+          /^{{ mantl-control-01.private }}/ {next}
+          /^{{ mantl-control-02.public }}/ {next}
+          /^{{ mantl-control-02.private }}/ {next}
+          /^{{ mantl-control-03.public }}/ {next}
+          /^{{ mantl-control-03.private }}/ {next}
+          /^{{ mantl-edge-01.public }}/ {next}
+          /^{{ mantl-edge-01.private }}/ {next}
+          /^{{ mantl-edge-02.public }}/ {next}
+          /^{{ mantl-edge-02.private }}/ {next}
+          /^{{ mantl-kubeworker-001.public }}/ {next}
+          /^{{ mantl-kubeworker-001.private }}/ {next}
+          /^{{ mantl-kubeworker-002.public }}/ {next}
+          /^{{ mantl-kubeworker-002.private }}/ {next}
+          /^{{ mantl-kubeworker-003.public }}/ {next}
+          /^{{ mantl-kubeworker-003.private }}/ {next}
+          /^{{ mantl-worker-001.public }}/ {next}
+          /^{{ mantl-worker-001.private }}/ {next}
+          /^{{ mantl-worker-002.public }}/ {next}
+          /^{{ mantl-worker-002.private }}/ {next}
+          /^{{ mantl-worker-003.public }}/ {next}
+          /^{{ mantl-worker-003.private }}/ {next}
+          /^{{ mantl-ansible.public }}/ {next}
+          /^{{ mantl-ansible.private }}/ {next}
           {print}
           END {
-           print "{{ mantl-control1.public }}    mantl-control1"
-           print "{{ mantl-control1.private }}    mantl-control1"
-           print "{{ mantl-control2.public }}    mantl-control2"
-           print "{{ mantl-control2.private }}    mantl-control2"
-           print "{{ mantl-control3.public }}    mantl-control3"
-           print "{{ mantl-control3.private }}    mantl-control3"
-           print "{{ mantl-edge1.public }}    mantl-edge1"
-           print "{{ mantl-edge1.private }}    mantl-edge1"
-           print "{{ mantl-kubeworker1.public }}    mantl-kubeworker1"
-           print "{{ mantl-kubeworker1.private }}    mantl-kubeworker1"
-           print "{{ mantl-kubeworker2.public }}    mantl-kubeworker2"
-           print "{{ mantl-kubeworker2.private }}    mantl-kubeworker2"
-           print "{{ mantl-worker1.public }}    mantl-worker1"
-           print "{{ mantl-worker1.private }}    mantl-worker1"
-           print "{{ mantl-worker2.public }}    mantl-worker2"
-           print "{{ mantl-worker2.private }}    mantl-worker2"
-           print "{{ mantl-worker3.public }}    mantl-worker3"
-           print "{{ mantl-worker3.private }}    mantl-worker3"
+           print "{{ mantl-control-01.public }}    mantl-control-01"
+           print "{{ mantl-control-01.private }}    mantl-control-01"
+           print "{{ mantl-control-02.public }}    mantl-control-02"
+           print "{{ mantl-control-02.private }}    mantl-control-02"
+           print "{{ mantl-control-03.public }}    mantl-control-03"
+           print "{{ mantl-control-03.private }}    mantl-control-03"
+           print "{{ mantl-edge-01.public }}    mantl-edge-01"
+           print "{{ mantl-edge-01.private }}    mantl-edge-01"
+           print "{{ mantl-edge-02.public }}    mantl-edge-02"
+           print "{{ mantl-edge-02.private }}    mantl-edge-02"
+           print "{{ mantl-kubeworker-001.public }}    mantl-kubeworker-001"
+           print "{{ mantl-kubeworker-001.private }}    mantl-kubeworker-001"
+           print "{{ mantl-kubeworker-002.public }}    mantl-kubeworker-002"
+           print "{{ mantl-kubeworker-002.private }}    mantl-kubeworker-002"
+           print "{{ mantl-kubeworker-003.public }}    mantl-kubeworker-003"
+           print "{{ mantl-kubeworker-003.private }}    mantl-kubeworker-003"
+           print "{{ mantl-worker-001.public }}    mantl-worker-001"
+           print "{{ mantl-worker-001.private }}    mantl-worker-001"
+           print "{{ mantl-worker-002.public }}    mantl-worker-002"
+           print "{{ mantl-worker-002.private }}    mantl-worker-002"
+           print "{{ mantl-worker-003.public }}    mantl-worker-003"
+           print "{{ mantl-worker-003.private }}    mantl-worker-003"
+           print "{{ mantl-ansible.public }}    mantl-ansible"
+           print "{{ mantl-ansible.private }}    mantl-ansible"
           }
 
     packages:
@@ -242,21 +254,61 @@ blueprints:
 
       nodes:
 
-        - mantl-control1:  ## also the ansible control node
+        - mantl-control-0[1..3]:
             default: control-node
 
+        - mantl-edge-0[1..2]:
+            default: edge-node
+
+        - mantl-kubeworker-00[1..3]:
+            default: kubeworker-node
+
+        - mantl-worker-00[1..3]:
+            default: worker-node
+
+        - mantl-ansible:
+            default: control-node
+
+            description: "#ansible node #mantl"
+
+            information:
+              - "Admin password has been set to: {{ secret.mantl }}"
+
             cloud-config:
+
+              write_files:
+
+                - path: /root/security-setup
+                  permissions: "0700"
+                  content: |
+                    #!/bin/sh
+                    export USER="root"
+                    export HOME="/root"
+                    /usr/bin/expect <<EOF
+                    spawn "/home/centos/mantl/security-setup"
+                    expect "Admin Password:"
+                    send "{{ secret.mantl }}\r"
+                    expect "Confirm:"
+                    send "{{ secret.mantl }}\r"
+                    expect eof
+                    exit
+                    EOF
 
               packages:
                 - epel-release
                 - python-devel
                 - openssl-devel
+                - expect
                 - git
 
               runcmd:
 
+                - echo "===== Installing development tools"
+                - yum group install -y "Development Tools"
+
                 - echo "===== Installing pip"
                 - yum install -y python-pip
+                - pip install --upgrade pip
                 - pip -V
 
                 - echo "===== Installing plumbery"
@@ -268,30 +320,30 @@ blueprints:
                 - ansible --version
 
                 - echo "===== Installing Mantl"
-                - cd /home/centos
+                - cd /opt
                 - git clone https://github.com/CiscoCloud/mantl
                 - cd mantl
                 - pip install -r requirements.txt
+
+                - echo "===== Configuring Mantl"
+                - sed -i "s|{{ playbook_dir }}/||" sample.yaml
+
+                - echo "===== Creating security certificates"
+                - /root/security-setup
 
                 - echo "===== Waiting for all nodes to be available"
                 - sleep 3m
 
                 - echo "===== Generating the inventory of nodes"
-                - cd /home/centos
+                - cd /opt/mantl
                 - wget -nv https://raw.githubusercontent.com/bernard357/plumbery-contrib/master/fittings/containers/mantl/fittings.yaml
                 - MCP_USERNAME="{{ credentials.name }}" MCP_PASSWORD="{{ credentials.password }}" plumbery fittings.yaml ansible
 
                 - echo "===== Checking that all nodes can be reached by ansible"
                 - ansible all -i inventory.yaml -m ping
 
-        - mantl-control[2..3]:
-            default: control-node
+                - echo "===== Upgrading all nodes with ansible"
+                - ansible-playbook -i inventory.yaml playbooks/upgrade-packages.yml
 
-        - mantl-edge1:
-            default: edge-node
-
-        - mantl-kubeworker[1..2]:
-            default: kubeworker-node
-
-        - mantl-worker[1..2]:
-            default: worker-node
+                - echo "===== Installing components at all nodes with ansible"
+                - ansible-playbook -i inventory.yaml -e @security.yml sample.yml
