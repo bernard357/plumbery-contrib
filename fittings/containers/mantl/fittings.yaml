@@ -327,7 +327,7 @@ blueprints:
 
                 - echo "===== Configuring Mantl"
                 - sed -i "s|{{ playbook_dir }}/||" sample.yml
-                - sed "11,44d" roles/common/tasks/main.yml
+                - sed -i "11,44d" roles/common/tasks/main.yml
 
                 - echo "===== Creating security certificates"
                 - /root/security-setup
