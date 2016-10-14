@@ -27,19 +27,19 @@ parameters:
     information:
       - "the quantity of CPU given to one Hadoop node"
     type: [4..32]
-    default: 8
+    default: 4
 
   memoryPerNode:
     information:
       - "the quantity of RAM given to one Hadoop node, in GB"
     type: [8..256]
-    default: 32
+    default: 12
 
   diskPerNode:
     information:
       - "the quantity of storage given to one Hadoop node, in GB"
     type: [100..1000]
-    default: 500
+    default: 200
 
 links:
   documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/analytics/hadoop-cluster

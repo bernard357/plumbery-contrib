@@ -29,6 +29,12 @@ parameters:
     type: str
     default: rancher01
 
+  cpuPerNode:
+    information:
+      - "the quantity of CPU given to server"
+    type: [4..32]
+    default: 4
+
   memoryPerNode:
     information:
       - "the quantity of memory to assign to each Rancher node"
@@ -63,13 +69,13 @@ defaults:
     # plenty of compute power
     #
     appliance: 'Ubuntu 14'
-    cpu: 32
+    cpu: "{{ parameter.cpuPerNode }}"
     memory: "{{ parameter.memoryPerNode }}"
 
     # enough storage space
     #
     disks:
-      - 1 1000 standard
+      - 1 100 standard
 
     # make the node accessible from the Internet
     #

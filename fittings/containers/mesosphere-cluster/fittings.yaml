@@ -28,13 +28,13 @@ parameters:
     information:
       - "the quantity of CPU given to one Mesos node"
     type: [4..32]
-    default: 8
+    default: 4
 
   memoryPerNode:
     information:
       - "the quantity of RAM given to one Mesos node, in GB"
     type: [8..256]
-    default: 32
+    default: 8
 
   diskPerNode:
     information:
