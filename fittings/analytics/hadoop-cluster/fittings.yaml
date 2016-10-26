@@ -1,7 +1,7 @@
 ---
 
 information:
-  - "Hadoop cluster with 1 master and 3 nodes"
+  - "Hadoop cluster with 1 master and 6 nodes"
 
 parameters:
 
@@ -189,12 +189,18 @@ defaults:
           /^{{ slave1.private }}/ {next}
           /^{{ slave2.private }}/ {next}
           /^{{ slave3.private }}/ {next}
+          /^{{ slave4.private }}/ {next}
+          /^{{ slave5.private }}/ {next}
+          /^{{ slave6.private }}/ {next}
           {print}
           END {
            print "{{ master1.private }}    master1"
            print "{{ slave1.private }}    slave1"
            print "{{ slave2.private }}    slave2"
            print "{{ slave3.private }}    slave3"
+           print "{{ slave4.private }}    slave4"
+           print "{{ slave5.private }}    slave5"
+           print "{{ slave6.private }}    slave6"
           }
 
       - path: /etc/profile.d/hadoop.sh
@@ -272,6 +278,9 @@ defaults:
             {{ slave1.public }}
             {{ slave2.public }}
             {{ slave3.public }}
+            {{ slave4.public }}
+            {{ slave5.public }}
+            {{ slave6.public }}
 
     bootcmd:
       - apt-get remove apache2 -y
@@ -372,5 +381,5 @@ blueprints:
         - master1:
             default: hadoop-master
 
-        - slave[1..3]:
+        - slave[1..6]:
             default: hadoop-slave

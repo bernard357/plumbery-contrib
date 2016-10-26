@@ -50,7 +50,7 @@
 ## Analytics services
 
 - [Hadoop single node cluster](analytics/hadoop-node)
-- [Hadoop cluster with 1 master and 3 nodes](analytics/hadoop-cluster)
+- [Hadoop cluster with 1 master and 6 nodes](analytics/hadoop-cluster)
 
 ## Database services
 
