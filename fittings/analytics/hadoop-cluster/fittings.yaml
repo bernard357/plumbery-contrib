@@ -66,6 +66,10 @@ defaults:
       - "http://{{ node.public }}:8088"
       - "connect remotely:"
       - "ssh ubuntu@{{ node.public }}"
+      - "test YARN:"
+      - "sudo /home/ubuntu/test_yarn.sh"
+      - "test mapreduce:"
+      - "sudo /home/ubuntu/test_mapreduce.sh"
 
     appliance: 'Ubuntu 14'
 
@@ -134,11 +138,11 @@ defaults:
         - echo "===== Checking YARN status"
         - yarn node -list
 
-        - echo "===== Testing MapReduce"
-        - echo "you can run /home/ubuntu/test_mapreduce.sh"
-
         - echo "===== Testing YARN"
         - echo "you can run /home/ubuntu/test_yarn.sh"
+
+        - echo "===== Testing MapReduce"
+        - echo "you can run /home/ubuntu/test_mapreduce.sh"
 
 
   hadoop-slave:  # deploy as much horsepower as needed
