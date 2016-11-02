@@ -1,0 +1,144 @@
+---
+
+information:
+  - "Mattermost, self-hosted chat server for private teams"
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU6
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: MatttermostFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: MattermostNetwork
+
+  nodeName:
+    information:
+      - "the name of the main node to be deployed"
+    type: str
+    default: mattermost-01
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/collaboration/mattermost
+  credit: https://docs.mattermost.com/install/docker-local-machine.html#ubuntu
+
+defaults:
+
+  cloud-config:
+
+    ssh_keys:
+      rsa_private: |
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
+
+    users:
+      - default
+
+      - name: ubuntu
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+      - name: root
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+    disable_root: false
+    ssh_pwauth: false
+
+---
+
+locationId: "{{ parameter.locationId }}"
+
+blueprints:
+
+  - letschat:
+
+      domain:
+        name: "{{ parameter.domainName }}"
+        ipv4: 2
+
+      ethernet:
+        name: "{{ parameter.networkName }}"
+        subnet: 10.9.8.0
+
+      nodes:
+        - "{{ parameter.nodeName }}":
+
+            information:
+              - "Access Mattermost conversations"
+              - "http://{{ node.public }}:8065/"
+
+            appliance: 'Ubuntu 14'
+            cpu: 4
+            memory: 8
+
+            disks:
+              - 1 50 standard
+
+            glue:
+              - internet 22 8065
+
+            monitoring: essentials
+
+            cloud-config:
+              hostname: "{{ node.name }}"
+
+              packages:
+                - wget
+
+              write_files:
+
+                - path: /root/hosts.awk
+                  content: |
+                    #!/usr/bin/awk -f
+                    /^{{ node.private }}/ {next}
+                    /^{{ node.ipv6 }}/ {next}
+                    {print}
+                    END {
+                     print "{{ node.private }}    {{ node.name }}"
+                     print "{{ node.ipv6 }}    {{ node.name }}"
+                    }
+
+              runcmd:
+
+                - echo "===== Growing LVM with added disk"
+                - pvcreate /dev/sdb
+                - vgextend rootvol00 /dev/sdb
+                - lvextend -l +100%FREE /dev/mapper/rootvol00-rootlvol00
+                - resize2fs /dev/mapper/rootvol00-rootlvol00
+
+                - echo "===== Handling ubuntu identity"
+                - cp -n /etc/ssh/ssh_host_rsa_key /home/ubuntu/.ssh/id_rsa
+                - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
+                - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
+                - cp -n /etc/ssh/ssh_host_rsa_key /root/.ssh/id_rsa
+                - cp -n /etc/ssh/ssh_host_rsa_key.pub /root/.ssh/id_rsa.pub
+
+                - echo "===== Updating /etc/hosts"
+                - cp -n /etc/hosts /etc/hosts.original
+                - awk -f /root/hosts.awk /etc/hosts >/etc/hosts.new && mv /etc/hosts.new /etc/hosts
+
+                - echo "===== Installing Docker"
+                - cd /home/ubuntu
+                - wget -qO- https://get.docker.com/ | sh
+                - usermod -aG docker ubuntu
+                - service docker start
+                - newgrp docker
+
+                - echo "===== Installing Mattermost"
+                - docker run --name mattermost-preview -d --publish 8065:8065 mattermost/mattermost-preview
