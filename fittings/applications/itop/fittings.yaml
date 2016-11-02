@@ -9,7 +9,7 @@ parameters:
     information:
       - "the target data centre for this deployment"
     type: locations.list
-    default: AU10
+    default: EU7
 
   domainName:
     information:
