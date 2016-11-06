@@ -6,7 +6,7 @@ information:
 links:
   documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/example/gigafox
 
-polishers:
+actions:
   - ansible:
       output: gigafox_ansible.yaml
   - inventory:

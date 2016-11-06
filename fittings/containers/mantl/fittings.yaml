@@ -240,7 +240,7 @@ defaults:
     disable_root: false
     ssh_pwauth: false
 
-polishers:
+actions:
   - ansible:
       output: inventory.yaml
 
