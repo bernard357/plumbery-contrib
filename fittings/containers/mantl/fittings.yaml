@@ -350,7 +350,7 @@ blueprints:
                 - chown -R centos:centos /opt/
                 - ansible-playbook -u centos -i inventory.yaml \
                     -e provider=bare-metal \
-                    -e consul_dc=dc1 \
+                    -e "consul_dc={{ parameter.locationId }}" \
                     -e @security.yml  sample.yml
 
 #                - ansible-playbook -i inventory.yaml playbooks/reboot-hosts.yml
