@@ -1,7 +1,7 @@
 # Enterprise-class container registry server with VMware Harbor
 
 The objective of this use case is to deploy a VMware Harbor server, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 ![harbor](harbor.png)
 

@@ -2,7 +2,7 @@
 
 The objective of this use case is to deploy a swarm of network pingers at
 multiple data centres, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 MQTT is used across the swarm to coordinate the pingers
 and to consolidate data. The back-end IPv6 infrastructure provided by

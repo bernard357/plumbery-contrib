@@ -1,7 +1,7 @@
 # Cluster of Redis servers
 
 The objective here is to deploy a cluster of redundant Redis servers, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 [Redis](http://redis.io/) is an open source (BSD licensed), in-memory data structure store, used as database, cache and message broker.
 It supports data structures such as strings, hashes, lists, sets, sorted sets with range queries, bitmaps, hyperloglogs and geospatial indexes with radius queries.

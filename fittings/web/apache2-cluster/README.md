@@ -1,7 +1,7 @@
 # Cluster of Apache web servers behind the load-balancer integrated in the Managed Cloud Platform
 
 The objective of this use case is to pool multiple web server, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 The web service is accessible from the Internet via a single public IPv4 address. Traffic is balanced across available
 web servers by the load-balancer that is coming with the Managed Cloud Platform itself.

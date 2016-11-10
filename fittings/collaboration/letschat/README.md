@@ -7,7 +7,7 @@ It's designed to be easily deployable and fits well with small, intimate teams. 
 
 In this use case we demonstrate how to create a ready-to-use [Let's Chat](https://sdelements.github.io/lets-chat/) server
 on a single node at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 ## Requirements for this use case
 

@@ -1,7 +1,7 @@
 # File repository with NGINX and rsync over IPv6 and IPv4
 
 The objective of this use case is to deploy a file server powered by Nginx, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 Here we are talking of a bare static web site, that is accessible from within the MCP infrastructure itself.
 

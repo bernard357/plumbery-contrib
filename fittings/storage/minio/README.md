@@ -1,7 +1,7 @@
 # Standalone minio s3-compatible object server
 
 The objective of this use case is to deploy object storage for some development, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 [Minio](https://github.com/minio/minio/blob/master/README.md) is a minimal cloud storage server that is compatible with Amazon S3
 APIs. This is useful if you need a lightweight object-based storage backend,

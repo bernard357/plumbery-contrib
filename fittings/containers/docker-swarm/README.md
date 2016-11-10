@@ -1,7 +1,7 @@
 # Docker Swarm, with one queen and 7 bees
 
 The objective of this use case is to deploy a swarm of Docker Nodes at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 This is a cluster of coordinated Docker Engine nodes. It is behaving like
 a swarm, with one queen (the manager) and seven bees (the workers). The use case

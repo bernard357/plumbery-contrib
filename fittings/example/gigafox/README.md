@@ -1,7 +1,7 @@
 # The master plan to conquer the world
 
 In this use case we demonstrate how a large number of nodes can be deployed at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 The goal of GigaFox is to deploy a global infrastructure involving
 multiple resources spread in different regions and connected to each other.

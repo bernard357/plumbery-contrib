@@ -1,7 +1,7 @@
 # MySQL replication over IPv6 back-end network
 
 The objective of this use case is to deploy a MySQL server and a MySQL client at two different locations, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 In this use case a master database server and a slave database server are
 deployed in different locations. The back-end IPv6 infrastructure

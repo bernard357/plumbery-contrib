@@ -2,7 +2,7 @@
 
 In this use case we will go over the installation of Elasticsearch, Logstash,
 and Kibana, the so-called ELK stack, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 Logstash is an open source tool for collecting, parsing, and storing logs for future use. Kibana is a web interface
 that can be used to search and view the logs that Logstash has indexed. Both

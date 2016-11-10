@@ -1,7 +1,7 @@
 # Docker node
 
 The objective of this use case is to deploy Docker Engine on a single node, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 Despite the surging interest in containers, the community is still struggling
 on the proper setup of a Docker node. There are a number of things to look at,

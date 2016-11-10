@@ -1,7 +1,7 @@
 # NFS server and client over IPv6 back-end network
 
 The objective of this use case is to deploy a NFS server and a NFS client at two different locations, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 In this tutorial a NFS server is deployed at one data centre, and
 a NFS client is deployed at another data centre. The infrastructure and the

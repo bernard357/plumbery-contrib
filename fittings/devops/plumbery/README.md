@@ -1,7 +1,7 @@
 # Plumbery and Apache Libcloud
 
 The objective of this use case is to deploy a plumbery node at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 In many cloud deployments, the appropriate strategy is to run administration
 servers directly in the cloud. This usually facilitates a lot end-to-end

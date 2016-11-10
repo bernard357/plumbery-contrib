@@ -1,7 +1,7 @@
 # GitLab Community Edition and Samba server, core internal services for developers
 
 The objective of this use case is to deploy core private services for developers, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 GitLab includes Git repository management, code reviews, issue tracking, wikis, and more, plus GitLab CI, an easy-to-use continuous integration and deployment tool.
 

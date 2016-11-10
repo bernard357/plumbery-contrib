@@ -1,7 +1,7 @@
 # Secured storage with SFTP (SSH File Transfer Protocol)
 
 In this use case we deploy a file server that is secured by SSH, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 [SFTP](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol), the SSH File Transfer Protocol, is a network protocol that provides file access, file transfer, and file management over any reliable data stream.
 SFTP is not FTP run over SSH, but rather a new protocol designed by the Internet Engineering Task Force (IETF) as an extension of the Secure Shell protocol (SSH) version 2.0 to provide secure file transfer capabilities.

@@ -1,7 +1,7 @@
 # Encryption of data disk with LUKS and LVM
 
 The objective of this use case is to deploy a server with encrypted storage, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 [Linux Unified Key Setup (LUKS)](https://gitlab.com/cryptsetup/cryptsetup/blob/master/README.md) is a disk encryption specification. Over time it has become a platform-independent standard on-disk format for use in various tools. This not only facilitates compatibility and interoperability among different programs, but also assures that they all implement password management in a secure and documented manner.
 

@@ -1,7 +1,7 @@
 # pfSense installed from ISO (experimental)
 
 This is a special project, where one pfSense node is deployed at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 Warning: this use case is provided only for experimentations. At this point in
 time pfSense is not supported by Dimension Data.

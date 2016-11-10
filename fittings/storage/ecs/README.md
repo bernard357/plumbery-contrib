@@ -1,7 +1,7 @@
 # EMC Elastic Cloud Storage (ECS), for development
 
 The objective of this use case is to deploy a EMC ECS node at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 [EMC Elastic Cloud Storage (ECS)](https://www.emc.com/storage/ecs/solutions.htm) brings all the benefits of a public cloud to your own datacenter while keeping your cost under control. It can be used for a wide variety of workloads such as deep archive, geo protection of Hadoop, Internet of Things and many more.
 ECS offers universal accessibility with support for industry standard object APIs (Amazon S3, OpenStack Swift, EMC’s Atmos & CAS) and HDFS interfaces. ECS provides a flexible platform to create and integrate an infinite number of modern applications.

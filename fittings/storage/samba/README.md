@@ -1,7 +1,7 @@
 # Samba file sharing server
 
 In this use case we deploy a Samba file server, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
-This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
+This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 ![Samba file sharing](samba.jpg)
 
