@@ -27,7 +27,7 @@ parameters:
     information:
       - "the name of the main node to be deployed"
     type: str
-    default: kubernetes01
+    default: kubernetes-01
 
 links:
   documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/containers/kubernetes
@@ -65,8 +65,8 @@ defaults:
     # plenty of compute power
     #
     appliance: 'Ubuntu 14'
-    cpu: 4
-    memory: 8
+    cpu: 8
+    memory: 12
 
     # enough storage space
     #
@@ -90,6 +90,10 @@ defaults:
 
       packages:
         - ntp
+        - software-properties-common
+        - make
+        - gcc
+        - git
 
       write_files:
 
@@ -127,14 +131,17 @@ defaults:
         - apt-get autoremove -y
 
         - echo "===== Installing Go"
-        - apt-get install git software-properties-common gcc git -y
-        - add-apt-repository ppa:evarlast/golang1.4 -y
-        - apt-get update
-        - apt-get install golang -y
+        - wget -nv https://storage.googleapis.com/golang/go1.7.1.linux-amd64.tar.gz
+        - tar -C /usr/local -xvf go1.7.1.linux-amd64.tar.gz
+        - rm go1.7.1.linux-amd64.tar.gz
+        - echo "export PATH=/usr/local/go/bin:$PATH" >/etc/profile.d/golang.sh
+        - export PATH=/usr/local/go/bin:$PATH
+        - go version
 
         - echo "===== Installing Docker Engine"
         - curl -sSL https://get.docker.com/ | sh
         - usermod -aG docker ubuntu
+        - docker -v
 
         - echo "===== Installing Calico"
         - add-apt-repository ppa:cory-benfield/project-calico -y
