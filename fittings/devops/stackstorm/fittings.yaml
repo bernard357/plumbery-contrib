@@ -1,7 +1,7 @@
 ---
 
 information:
-  - "Stackstorm server, event-based Ops"
+  - "Stackstorm server, event-driven Ops"
 
 parameters:
 
@@ -9,7 +9,7 @@ parameters:
     information:
       - "the target data centre for this deployment"
     type: locations.list
-    default: AU10
+    default: EU7
 
   domainName:
     information:
@@ -27,10 +27,11 @@ parameters:
     information:
       - "the name of the main node to be deployed"
     type: str
-    default: stackstorm01
+    default: stackstorm-01
 
 links:
   documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/devops/stackstorm
+  credit: https://docs.stackstorm.com/install/deb.html
 
 defaults:
 
@@ -52,6 +53,12 @@ defaults:
 
       - name: root
         sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+      - name: stanley
+        sudo: 'ALL=(ALL) NOPASSWD:ALL, SETENV:ALL'
         ssh-authorized-keys:
           - "{{ rsa_public.key }}"
           - "{{ rsa_public.local }}"
@@ -80,10 +87,11 @@ blueprints:
 
         - "{{ parameter.nodeName }}":
 
-            description: "#stackstorm #ubuntu"
-
             information:
               - "open a browser at https://{{ node.public }}/ to view it live"
+              - "authenticate with: st2adin and: Ch@ngeMe"
+              - "ssh ubuntu@{{ node.public }}"
+              - "st2ctl start|stop|status|restart|restart-component|reload|clean"
 
             appliance: 'Ubuntu 14'
             cpu: 4
@@ -99,8 +107,36 @@ blueprints:
 
             cloud-config:
 
+              write_files:
+
+                - path: /etc/apt/sources.list.d/mongodb-org-3.2.list
+                  permissions: "0755"
+                  content: |
+                    deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse
+
+                - path: /etc/apt/sources.list.d/nginx.list
+                  permissions: "0755"
+                  content: |
+                    deb http://nginx.org/packages/ubuntu/ trusty nginx
+                    deb-src http://nginx.org/packages/ubuntu/ trusty nginx
+
+                - path: /root/mistral.sql
+                  permissions: "0755"
+                  content: |
+                    CREATE ROLE mistral WITH CREATEDB LOGIN ENCRYPTED PASSWORD 'StackStorm';
+                    CREATE DATABASE mistral OWNER mistral;
+
+              bootcmd:
+                - apt-get remove apache2 -y
+                - apt-get autoremove -y
+
               packages:
                 - ntp
+                - gnupg-curl
+                - curl
+                - rabbitmq-server
+                - postgresql
+                - apache2-utils
 
               runcmd:
 
@@ -114,7 +150,85 @@ blueprints:
                 - cp -n /etc/ssh/ssh_host_rsa_key /home/ubuntu/.ssh/id_rsa
                 - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
                 - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
+
+                - echo "===== Handling root identity"
+                - cp -n /etc/ssh/ssh_host_rsa_key /root/.ssh/id_rsa
+                - cp -n /etc/ssh/ssh_host_rsa_key.pub /root/.ssh/id_rsa.pub
                 - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
 
-                - echo "===== Installing Stackstorm"
-                - curl -sSL https://raw.githubusercontent.com/DimensionDataCBUSydney/st2_dimensiondata/master/install-au.sh | sh
+                - echo "===== Handling stanley identity"
+                - cp -n /etc/ssh/ssh_host_rsa_key /home/stanley/.ssh/stanley_rsa
+                - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/stanley/.ssh/stanley_rsa.pub
+                - chown stanley:stanley /home/stanley/.ssh/*
+                - sudo sed -i -r "s/^Defaults\s+\+?requiretty/# Defaults +requiretty/g" /etc/sudoers
+
+                - echo "===== Installing MongoDB"
+                - apt-key adv --fetch-keys https://www.mongodb.org/static/pgp/server-3.2.asc
+                - apt-get update
+                - apt-get install -y mongodb-org
+
+                - echo "===== Setup repositories"
+                - curl -s https://packagecloud.io/install/repositories/StackStorm/stable/script.deb.sh | sudo bash
+
+                - echo "===== Installing Stackstorm components"
+                - apt-get install -y st2 st2mistral
+
+                - echo "===== Creating Mistral database"
+                - cat /root/mistral.sql | sudo -u postgres psql
+                - /opt/stackstorm/mistral/bin/mistral-db-manage --config-file /etc/mistral/mistral.conf upgrade head
+                - /opt/stackstorm/mistral/bin/mistral-db-manage --config-file /etc/mistral/mistral.conf populate
+
+                - echo "===== Starting services"
+                - sudo st2ctl start
+                - sudo st2ctl reload
+                - sudo st2ctl start
+                - sudo st2ctl reload
+
+                - echo "===== Checking version"
+                - st2 --version
+
+                - echo "===== Checking help"
+                - st2 -h
+
+                - echo "===== Listing actions from a core pack"
+                - st2 action list --pack=core
+
+                - echo "===== Running a local command"
+                - st2 run core.local -- date -R
+
+                - echo "===== Seeing execution results"
+                - st2 execution list
+
+                - echo "===== Using remote command over SSH"
+                - st2 run core.remote hosts='localhost' -- uname -a
+
+                - echo "===== Installing a pack"
+                - st2 run packs.install packs=st2
+
+                - echo "===== Configuring authentication"
+                - echo "Ch@ngeMe" | sudo htpasswd -i /etc/st2/htpasswd st2admin
+                - st2ctl restart-component st2api
+                - st2 auth st2admin
+                - export ST2_AUTH_TOKEN=$(st2 auth st2admin -p Ch@ngeMe -t)
+                - st2 action list
+
+                - echo "===== Installing WebUI"
+                - apt-key adv --fetch-keys http://nginx.org/keys/nginx_signing.key
+                - apt-get update
+                - apt-get install -y st2web nginx
+                - mkdir -p /etc/ssl/st2
+                - openssl req -x509 -newkey rsa:2048 -keyout /etc/ssl/st2/st2.key -out /etc/ssl/st2/st2.crt \
+                    -days 300 -nodes -subj "/C=US/ST=California/L=Palo Alto/O=StackStorm/OU=Information \
+                    Technology/CN=$(hostname)"
+                - rm /etc/nginx/conf.d/default.conf
+                - cp /usr/share/doc/st2/conf/nginx/st2.conf /etc/nginx/conf.d/
+                - service nginx restart
+
+                - echo "===== Installing ChatOps"
+#                - "st2 rule get chatops.notify || st2 rule create /opt/stackstorm/packs/chatops/rules/notify_hubot.yaml"
+                - "curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -"
+                - apt-get install -y st2chatops
+
+                - echo "===== Starting ChatOps"
+                - service st2chatops start
+                - st2ctl reload --register-all
