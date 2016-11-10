@@ -1,0 +1,286 @@
+---
+
+information:
+  - "WildFly application server, for your Java code"
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU6
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: WildFlyFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: WildFlyNetwork
+
+  cpuPerNode:
+    information:
+      - "the quantity of CPU given to server"
+    type: [4..32]
+    default: 4
+
+  memoryPerNode:
+    information:
+      - "the quantity of RAM given to server, in GB"
+    type: [8..256]
+    default: 12
+
+  diskPerNode:
+    information:
+      - "the quantity of storage given to server, in GB"
+    type: [100..1000]
+    default: 100
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/paas/wildfly
+  credit: https://docs.jboss.org/author/display/WFLY8/Getting+Started+Guide
+
+defaults:
+
+  domain:
+    name: "{{ parameter.domainName }}"
+    ipv4: auto
+
+  ethernet:
+    name: "{{ parameter.networkName }}"
+    subnet: 10.60.0.0
+
+  wildfly-node:
+
+    description: "WildFly node"
+
+    information:
+      - "WildFly hello world:"
+      - "http://{{ node.public }}:8080/helloworld/hi.jsp"
+      - "WildFly management web console:"
+      - "http://{{ node.public }}:9990"
+      - "provide user: plumbery and password: {{ secret.wildfly }}"
+      - "For troubleshooting you can connect remotely:"
+      - "ssh centos@{{ node.public }}"
+
+    appliance: 'CentOS 7'
+
+    cpu: "{{ parameter.cpuPerNode }}"
+    memory: "{{ parameter.memoryPerNode }}"
+
+    disks:
+      - "1 {{ parameter.diskPerNode }} standard"
+
+    glue:
+      - internet icmp 22 8080 8443 9443 9990
+
+    monitoring: essentials
+
+    cloud-config:
+
+      write_files:
+
+        - path: /root/add-user
+          permissions: "0700"
+          content: |
+            #!/bin/sh
+            export USER="root"
+            export HOME="/root"
+            /usr/bin/expect <<EOF
+            spawn "/opt/wildfly/bin/add-user.sh"
+            expect "(a):"
+            send "\r"
+            expect "Username :"
+            send "plumbery\r"
+            expect "Password :"
+            send "{{ secret.wildfly }}\r"
+            expect "Re-enter Password :"
+            send "{{ secret.wildfly }}\r"
+            expect "leave blank for none)[  ]:"
+            send "\r"
+            expect "Is this correct yes/no?"
+            send "yes\r"
+            expect "yes/no?"
+            send "yes\r"
+            expect eof
+            exit
+            EOF
+
+
+
+        - path: /root/standalone.sed
+          content: |
+            #!/usr/bin/sed
+            s/jboss.bind.address:127.0.0.1/jboss.bind.address:0.0.0.0/
+            s/jboss.bind.address.management:127.0.0.1/jboss.bind.address.management:0.0.0.0/
+
+        - path: /root/wildfly.service
+          permissions: "0700"
+          content: |
+            [Unit]
+            Description=WildFly Application Server
+            After=network.target
+
+            [Service]
+            Type=idle
+            Environment=JAVA_HOME=/opt/java \
+                JBOSS_HOME=/opt/wildfly \
+                JAVA=/bin/java \
+                JBOSS_LOG_DIR=/var/log/wildfly \
+                "JAVA_OPTS=-Xms1024m -Xmx10240m -XX:MaxPermSize=768m"
+            User=centos
+            Group=centos
+            ExecStart=/opt/wildfly/bin/standalone.sh
+            TimeoutStartSec=600
+            TimeoutStopSec=600
+
+            [Install]
+            WantedBy=multi-user.target
+
+        - path: /root/helloworld/hi.jsp
+          permissions: "0700"
+          content: |
+            <!doctype html>
+            <html>
+            <head>
+            <title>JSP Test</title>
+            <%!
+            String message = "Hello, World.";
+            %>
+            </head>
+            <body>
+            <h2><%= message%></h2>
+            <%= new java.util.Date() %>
+            </body>
+            </html>
+
+        - path: /root/helloworld/WEB-INF/web.xml
+          permissions: "0700"
+          content: |
+            <web-app>
+            <display-name>Hello World</display-name>
+            </web-app>
+
+      packages:
+        - expect
+        - git
+
+      runcmd:
+
+        - echo "===== Downloading WildFly"
+        - wget -nv http://download.jboss.org/wildfly/10.1.0.Final/wildfly-10.1.0.Final.zip
+        - unzip wildfly-10.1.0.Final.zip -d /home/centos
+        - rm -f wildfly-10.1.0.Final.zip
+        - ln -s /home/centos/wildfly-10.1.0.Final /opt/wildfly
+
+        - echo "===== Adding management user"
+        - /root/add-user
+
+        - echo "===== Configuring WildFly"
+        - sed -i -f /root/standalone.sed /opt/wildfly/standalone/configuration/standalone.xml
+        - chown -fR centos:centos /home/centos/wildfly-10.1.0.Final/
+
+        - echo "===== Configuring systemd"
+        - cp -n /root/wildfly.service /etc/systemd/system/wildfly.service
+        - systemctl daemon-reload
+        - systemctl enable wildfly.service
+        - systemctl start wildfly.service
+        - systemctl status wildfly.service
+
+        - echo "===== Building helloworld"
+        - cd /root/helloworld
+        - jar -cvf helloworld.war *.jsp WEB-INF
+        - cp helloworld.war /opt/wildfly/standalone/deployments/
+
+        - echo "===== Installing Maven"
+        - cd /home/centos
+        - wget -nv http://mirrors.ircam.fr/pub/apache/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.zip
+        - unzip apache-maven-3.3.9-bin.zip
+        - rm -f apache-maven-3.3.9-bin.zip
+        - ln -s /home/centos/apache-maven-3.3.9 /opt/maven
+        - chown -fR centos:centos /home/centos/apache-maven-3.3.9/
+        - /opt/maven/bin/mvn -v
+
+  cloud-config:  # apply to all nodes
+
+    hostname: "{{ node.name }}"
+
+    write_files:
+
+      - path: /root/hosts.awk
+        content: |
+          #!/usr/bin/awk -f
+          /^{{ node.public }}/ {next}
+          /^{{ node.private }}/ {next}
+          {print}
+          END {
+           print "{{ node.public }}    {{ node.name }}"
+           print "{{ node.private }}    {{ node.name }}"
+          }
+
+    packages:
+      - ntp
+      - java-1.8.0-openjdk-devel
+      - wget
+      - unzip
+
+    runcmd:
+
+      - echo "===== Growing LVM with added disk"
+      - pvcreate /dev/sdb
+      - vgextend centos /dev/sdb
+      - lvextend -l +100%FREE /dev/mapper/centos-root
+      - xfs_growfs /dev/mapper/centos-root
+
+      - echo "===== Handling centos identity"
+      - cp -n /etc/ssh/ssh_host_rsa_key /home/centos/.ssh/id_rsa
+      - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/centos/.ssh/id_rsa.pub
+      - chown centos:centos /home/centos/.ssh/*
+      - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+      - echo "===== Updating /etc/hosts"
+      - cp -n /etc/hosts /etc/hosts.original
+      - awk -f /root/hosts.awk /etc/hosts >/etc/hosts.new && mv /etc/hosts.new /etc/hosts
+
+      - echo "===== Checking Java"
+      - java -version
+
+    ssh_keys:
+      rsa_private: |
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
+
+    users:
+      - default
+
+      - name: centos
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+      - name: root
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+    disable_root: false
+    ssh_pwauth: false
+
+---
+
+locationId: "{{ parameter.locationId }}"
+
+blueprints:
+
+  - single:
+
+      nodes:
+        - wildfly-01:
+            default: wildfly-node
