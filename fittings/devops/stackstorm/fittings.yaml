@@ -225,7 +225,7 @@ blueprints:
                 - service nginx restart
 
                 - echo "===== Installing ChatOps"
-#                - "st2 rule get chatops.notify || st2 rule create /opt/stackstorm/packs/chatops/rules/notify_hubot.yaml"
+                - "st2 rule get chatops.notify || st2 rule create /opt/stackstorm/packs/chatops/rules/notify_hubot.yaml"
                 - "curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -"
                 - apt-get install -y st2chatops
 
