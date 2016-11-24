@@ -23,12 +23,6 @@ parameters:
     type: str
     default: RancherNetwork
 
-  nodeName:
-    information:
-      - "the name of the main node to be deployed"
-    type: str
-    default: rancher01
-
   cpuPerNode:
     information:
       - "the quantity of CPU given to server"
@@ -58,15 +52,7 @@ defaults:
 
   rancher-node:
 
-    description: "#rancher #ubuntu"
-
-    information:
-      - "go to the rancher web UI:"
-      - "http://{{ node.public }}:8080"
-      - "get some insight if needed:"
-      - "ssh ubuntu@{{ node.public }}"
-
-    # plenty of compute power
+    # enough compute power
     #
     appliance: 'Ubuntu 14'
     cpu: "{{ parameter.cpuPerNode }}"
@@ -80,7 +66,7 @@ defaults:
     # make the node accessible from the Internet
     #
     glue:
-      - internet icmp 22 80 4040 8080
+      - internet icmp 22 80 4040 8080 udp:500 udp:4500
 
     # allow for monitoring from the global dashboard
     #
@@ -108,6 +94,14 @@ defaults:
              print "{{ node.ipv6 }}    {{ node.name }}"
             }
 
+        - path: /etc/profile.d/mcp.sh
+          permissions: "0755"
+          content: |
+            #!/bin/sh
+            export MCP_USER="{{ environment.MCP_USER }}"
+            export MCP_PASSWORD="{{ environment.MCP_PASSWORD }}"
+            export MCP_SSH_BOOTSTRAP_PASSWORD="{{ environment.MCP_SSH_BOOTSTRAP_PASSWORD }}"
+
       runcmd:
 
         - echo "===== Growing LVM with added disk"
@@ -134,10 +128,6 @@ defaults:
 
         - echo "===== Checking Docker installation"
         - docker run hello-world
-
-        - echo "===== Adding Rancher"
-        - docker run -d --restart=always -p 8080:8080 rancher/server
-        - docker pull rancher/agent
 
   cloud-config:
 
@@ -172,5 +162,46 @@ blueprints:
 
   - rancher:
       nodes:
-        - "{{ parameter.nodeName }}":
+        - rancher-01:
             default: rancher-node
+
+            description: "rancher web console"
+
+            information:
+              - "go to the rancher web UI:"
+              - "http://{{ node.public }}:8080"
+              - "get some insight if needed:"
+              - "ssh ubuntu@{{ node.public }}"
+
+            cloud-config:
+
+              runcmd:
+
+                - echo "===== Installing Docker Machine"
+                - curl -L https://github.com/docker/machine/releases/download/v0.9.0-rc1/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine
+                - chmod +x /usr/local/bin/docker-machine
+
+                - echo "===== Checking Docker Machine installation"
+                - docker-machine version
+
+                - echo "===== Adding Docker Machine driver for MCP"
+                - cd /root
+                - wget -nv https://github.com/DimensionDataResearch/docker-machine-driver-ddcloud/releases/download/v0.8/linux-amd64.zip
+                - unzip linux-amd64.zip
+                - rm -f linux-amd64.zip
+                - mv /root/_bin/linux-amd64/docker-machine-driver-ddcloud /usr/local/bin/
+                - rm -R _bin
+
+                - echo "===== Adding Rancher"
+                - docker run -d --restart=always -p 8080:8080 rancher/server
+                - docker pull rancher/agent
+
+        - rancher-0[2..3]:
+            default: rancher-node
+
+            description: "rancher cattle"
+
+            information:
+              - "ssh ubuntu@{{ node.public }}"
+
+
