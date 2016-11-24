@@ -196,6 +196,14 @@ blueprints:
                 - docker run -d --restart=always -p 8080:8080 rancher/server
                 - docker pull rancher/agent
 
+                - echo "===== Adding Rancher CLI"
+                - cd /root
+                - wget -nv https://github.com/rancher/cli/releases/download/v0.3.1/rancher-linux-amd64-v0.3.1.tar.gz
+                - tar xvf rancher-linux-amd64-v0.3.1.tar.gz
+                - rm -f rancher-linux-amd64-v0.3.1.tar.gz
+                - mv /root/rancher-v0.3.1/rancher /usr/local/bin/
+                - rm -R rancher-v0.3.1/
+
         - rancher-0[2..3]:
             default: rancher-node
 
