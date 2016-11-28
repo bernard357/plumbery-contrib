@@ -221,7 +221,7 @@ defaults:
         content: |
           <property>
               <name>fs.defaultFS</name>
-              <value>hdfs://{{ master1.private }}/</value>
+              <value>hdfs://{{ master-01.private }}/</value>
               <description>NameNode URI</description>
           </property>
 
@@ -249,7 +249,7 @@ defaults:
         content: |
             <property>
                 <name>yarn.resourcemanager.hostname</name>
-                <value>{{ master1.private }}</value>
+                <value>{{ master-01.private }}</value>
                 <description>The hostname of the ResourceManager</description>
             </property>
 
