@@ -1,7 +1,7 @@
 ---
 
 information:
-  - "Hadoop cluster with 1 master and 6 nodes"
+  - "Hadoop cluster with 1 master and 3 nodes"
 
 parameters:
 
@@ -89,14 +89,14 @@ defaults:
       write_files:
 
         - path: /home/ubuntu/test_mapreduce.sh
-          permissions: "0755"
+          permissions: 0o755
           content: |
               echo "===== Executing randomwriter example"
               $HADOOP_PREFIX/bin/hadoop \
                   jar $HADOOP_PREFIX/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar randomwriter out
 
         - path: /home/ubuntu/test_yarn.sh
-          permissions: "0755"
+          permissions: 0o755
           content: |
               echo "===== Running distributed shell with 2 containers and executing the script 'date'"
               $HADOOP_PREFIX/bin/hadoop \
@@ -202,7 +202,7 @@ defaults:
           }
 
       - path: /etc/profile.d/hadoop.sh
-        permissions: "0755"
+        permissions: 0o755
         content: |
             export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64
             export HADOOP_PREFIX=/opt/hadoop
@@ -211,7 +211,7 @@ defaults:
             export PATH=$PATH:$HADOOP_PREFIX/sbin
 
       - path: /etc/sudoers.d/hadoop_env
-        permissions: "0440"
+        permissions: 0o440
         content: |
             Defaults  env_keep += "JAVA_HOME"
             Defaults  env_keep += "HADOOP_PREFIX"
