@@ -89,7 +89,7 @@ blueprints:
 
             information:
               - "open a browser at https://{{ node.public }}/ to view it live"
-              - "authenticate with: st2adin and: Ch@ngeMe"
+              - "authenticate with: st2admin and: Ch@ngeMe"
               - "ssh ubuntu@{{ node.public }}"
               - "st2ctl start|stop|status|restart|restart-component|reload|clean"
 

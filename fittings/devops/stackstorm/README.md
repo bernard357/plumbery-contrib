@@ -1,8 +1,11 @@
 # Stackstorm server, event-based Ops
 
+![StackStorm](stackstorm.png)
+
+[StackStorm](https://stackstorm.com) is a powerful open-source automation platform that wires together all of your apps, services and workflows. It’s extendable, flexible, and built with love for DevOps and ChatOps. StackStorm (aka "IFTTT for Ops") is event-driven automation commonly used for auto-remediation, security responses, facilitated troubleshooting, complex deployments, and more.
+
 The objective of this use case is to deploy a Stackstorm server, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
 This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
-
 
 ## Requirements for this use case
 
@@ -46,6 +49,17 @@ at any time with the following command:
 Open a browser window and paste the public address reported by plumbery.
 You should receive a login page in return.
 
+![login](login.png)
+
+Type credentials mentioned by plumbery and enter the server.
+
+![welcome](welcome.png)
+
+If you are totally new to event-driven operations, you may want to visit [the StackStorm documentation](https://docs.stackstorm.com)
+repository while playing with your new server.
+
+([docs](docs.png)
+
 ## Destruction commands
 
 Launch following command to remove all resources involved in the fittings plan:
@@ -54,7 +68,7 @@ Launch following command to remove all resources involved in the fittings plan:
 
 ## Use case status
 
-- [ ] Work as expected
+- [x] Work as expected
 
 ## See also
 
