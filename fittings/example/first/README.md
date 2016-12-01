@@ -37,7 +37,7 @@ at any time with the following command:
 In this use case you can use the IPv4 assigned to the node for direct ssh
 connection.
 
-    $ ssh ubuntu@<ipv4_here>
+    $ ssh root@<ipv4_here>
 
 ## Destruction commands
 
