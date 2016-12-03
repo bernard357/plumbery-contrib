@@ -1,0 +1,252 @@
+---
+
+information:
+  - "Kurento Media Server (KMS), for private WebRTC applications"
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU7
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: KurentoFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: KurentoNetwork
+
+  nodeName:
+    information:
+      - "the name of the main node to be deployed"
+    type: str
+    default: kurento-01
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/collaboration/kurento
+  credit: http://doc-kurento.readthedocs.io/en/stable/tutorials/js/tutorial-magicmirror.html
+
+defaults:
+
+  cloud-config:
+
+    ssh_keys:
+      rsa_private: |
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
+
+    users:
+      - default
+
+      - name: ubuntu
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+      - name: root
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+    disable_root: false
+    ssh_pwauth: false
+
+---
+
+locationId: "{{ parameter.locationId }}"
+
+blueprints:
+
+  - microservice:
+
+      domain:
+        name: "{{ parameter.domainName }}"
+        ipv4: auto
+
+      ethernet:
+        name: "{{ parameter.networkName }}"
+        subnet: 10.124.0.0
+
+      nodes:
+
+        - "{{ parameter.nodeName }}":
+
+            description: "#kurento #ubuntu"
+
+            information:
+              - "Use a WebRTC capable browser (Chrome, Firefox)"
+              - "Accept self-signed certificate:"
+              - "https://{{ node.public }}:8433/kurento"
+              - "Launch the demonstration:"
+              - "https://{{ node.public }}:8443"
+              - "If debugging is needed:"
+              - "ssh ubuntu@{{ node.public }}"
+
+            appliance: 'Ubuntu 14'
+            cpu: 8
+            memory: 8
+
+            disks:
+              - 1 50 standard
+
+            glue:
+              - internet 22 80 8433 8443 8888 udp:1..65535
+
+            monitoring: essentials
+
+            cloud-config:
+
+              hostname: "{{ node.name }}"
+
+              bootcmd:
+                - echo "debconf debconf/frontend select noninteractive" | debconf-set-selections
+                - echo "libssl1.0.0 libssl1.0.0/restart-services string ssh ntp" | debconf-set-selections
+                - echo "libssl1.0.0:amd64 libssl1.0.0/restart-services string ssh ntp" | debconf-set-selections
+
+              packages:
+                - ntp
+                - git
+                - debconf-utils
+                - gnutls-bin
+
+              write_files:
+
+                - path: /root/hosts.awk
+                  content: |
+                    #!/usr/bin/awk -f
+                    /^{{ node.public }}/ {next}
+                    /^{{ node.private }}/ {next}
+                    {print}
+                    END {
+                     print "{{ node.public }}    {{ node.name }}"
+                     print "{{ node.private }}    {{ node.name }}"
+                    }
+
+                - path: /etc/init/webapplication.conf
+                  permissions: "0755"
+                  content: |
+                    description "web application powered by kurento media server"
+
+                    start on started mountall
+                    stop on shutdown
+
+                    respawn
+                    respawn limit 99 5
+
+                    script
+                        export HOME="/root"
+                        cd /home/ubuntu/kurento-tutorial-js/kurento-magic-mirror
+                        http-server -p 8443 -S -C keys/server.crt -K keys/server.key
+                    end script
+
+                - path: /root/generate-certificate.sh
+                  permissions: "0755"
+                  content: |
+                    #!/bin/sh
+                    certtool --generate-privkey --outfile /etc/kurento/defaultCertificate.pem
+                    echo 'organization = plumbery' > /etc/kurento/certtool.tmpl
+                    certtool --generate-self-signed \
+                        --load-privkey /etc/kurento/defaultCertificate.pem \
+                        --template /etc/kurento/certtool.tmpl \
+                        >> /etc/kurento/defaultCertificate.pem
+                    sudo chown kurento /etc/kurento/defaultCertificate.pem
+
+                - path: /root/websockets.pl
+                  permissions: "0755"
+                  content: |
+                    #!/usr/bin/perl -pi
+
+                    use strict;
+                    use warnings;
+
+                    BEGIN {undef $/;}
+
+                    my $from = '//"secure": {
+                            //  "port": 8433,
+                            //  "certificate": "defaultCertificate.pem",
+                            //  "password": ""
+                            //},';
+
+                    my $to = '"secure": {
+                              "port": 8433,
+                              "certificate": "defaultCertificate.pem",
+                              "password": ""
+                            },';
+
+                    s/$from/$to/smg;
+
+                - path: /root/kurento.sed
+                  content: |
+                    #!/usr/bin/sed
+                    /stunServerAddress/s|^.*$|stunServerAddress=74.125.140.127|
+                    /stunServerPort/s|^.*$|stunServerPort=19302|
+
+              runcmd:
+
+                - echo "===== Growing LVM with added disk"
+                - pvcreate /dev/sdb
+                - vgextend rootvol00 /dev/sdb
+                - lvextend -l +100%FREE /dev/mapper/rootvol00-rootlvol00
+                - resize2fs /dev/mapper/rootvol00-rootlvol00
+
+                - echo "===== Handling ubuntu identity"
+                - cp -n /etc/ssh/ssh_host_rsa_key /home/ubuntu/.ssh/id_rsa
+                - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
+                - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
+                - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+                - echo "===== Updating /etc/hosts"
+                - cp -n /etc/hosts /etc/hosts.original
+                - awk -f /root/hosts.awk /etc/hosts >/etc/hosts.new && mv /etc/hosts.new /etc/hosts
+
+                - echo "===== Installing Kurento Media Server"
+                - wget -nv -O - http://ubuntu.kurento.org/kurento.gpg.key | sudo apt-key add -
+                - echo "deb http://ubuntu.kurento.org trusty kms6" | sudo tee /etc/apt/sources.list.d/kurento.list
+                - apt-get update
+                - apt-get install -y kurento-media-server-6.0
+
+                - echo "===== Generating self-signed certificate"
+                - /root/generate-certificate.sh
+
+                - echo "===== Securing websockets"
+                - perl /root/websockets.pl /etc/kurento/kurento.conf.json
+
+                - echo "===== Adding STUN servers"
+                - sed -i -f /root/kurento.sed /etc/kurento/modules/kurento/WebRtcEndpoint.conf.ini
+
+                - echo "===== Starting Kurento Media Server"
+                - service kurento-media-server-6.0 start
+
+                - echo "===== Checking Kurento Media Server"
+                - ps -ef | grep kurento-media-server
+                - sudo netstat -putan | grep kurento
+
+                - echo "===== Installing Node JS and NPM"
+                - curl -sL https://deb.nodesource.com/setup_4.x | sudo bash -
+                - apt-get install -y nodejs
+
+                - echo "===== Installing web server"
+                - npm install -g http-server
+
+                - echo "===== Installing bower"
+                - npm install -g bower
+
+                - echo "===== Installing web application"
+                - cd /home/ubuntu
+                - git clone https://github.com/Kurento/kurento-tutorial-js.git
+                - cd kurento-tutorial-js/kurento-magic-mirror
+                - git checkout 6.6.0
+                - chown -R ubuntu:ubuntu /home/ubuntu
+                - sudo -u ubuntu bower install
+
+                - echo "===== Starting web application"
+                - start webapplication

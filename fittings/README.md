@@ -25,6 +25,7 @@
 
 ## Collaboration services
 
+- [Kurento Media Server (KMS), for private WebRTC applications](collaboration/kurento)
 - [Mattermost, self-hosted chat server for private teams](collaboration/mattermost)
 - [Hubot server](collaboration/hubot)
 - [BigBlueButton, self-hosted web conferencing system for on-line learning](collaboration/bigbluebutton)
