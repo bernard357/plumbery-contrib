@@ -79,6 +79,12 @@ On the server, the WebRTC building block is tied with an overlay filter in the f
 
 The FaceOverlayFilter is a sophisticated component that detects faces in the video stream and puts an image on top of them. In this demo the filter is configured to put a Super Mario hat.
 
+Beyond the funny experience, the demonstration is showing evidence of multiple important capabilities:
+- orchestration of a fully-functional private WebRTC instance at any MCP location in 15 minutes
+- security of video communications over HTTPS and websockets
+- support of demanding real-time applications by the MCP
+- suitable open platform for the development of professional WebRTC applications powered by Kurento Media Server
+
 This application is coming out of the box from [Kurento Tutorials](http://doc-kurento.readthedocs.io/en/stable/tutorials.html) where you can find more details and other innovative ideas from the Kurento team.
 
 ## Destruction commands
