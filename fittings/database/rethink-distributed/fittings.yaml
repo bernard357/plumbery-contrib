@@ -1,0 +1,374 @@
+---
+
+information:
+  - "RethinkDB geo-distributed JSON store"
+
+parameters:
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: RethinkFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: RethinkNetwork
+
+  cpuPerNode:
+    information:
+      - "the quantity of CPU given to each RethinkDB node"
+    type: [4..32]
+    default: 2
+
+  memoryPerNode:
+    information:
+      - "the quantity of RAM given to each RethinkDB node, in GB"
+    type: [8..256]
+    default: 4
+
+  diskPerNode:
+    information:
+      - "the quantity of storage given to each RethinkDB node, in GB"
+    type: [100..1000]
+    default: 100
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/database/rethink-distributed
+  credit: https://rethinkdb.com/docs/install/ubuntu/
+
+defaults:
+
+  rethink-seed:
+
+    description: "Rethink seed"
+
+    information:
+      - "RethinkDB web console:"
+      - "http://{{ node.public }}:8080"
+      - "Todo web application:"
+      - "http://{{ node.public }}:5000"
+      - "Troubleshooting:"
+      - "ssh ubuntu@{{ node.public }}"
+
+    appliance: 'Ubuntu 14'
+
+    cpu: "{{ parameter.cpuPerNode }}"
+    memory: "{{ parameter.memoryPerNode }}"
+
+    disks:
+      - "1 {{ parameter.diskPerNode }} standard"
+
+    glue:
+      - internet icmp 22 5000 8080
+
+    monitoring: essentials
+
+    cloud-config:
+
+      runcmd:
+
+        - echo "===== Starting RethinkDB"
+        - service rethinkdb start
+
+        - echo "===== Initialising todo database"
+        - python todo.py --setup
+
+        - echo "===== Starting todo application"
+        - start todo
+
+
+  rethink-node:
+
+    description: "Rethink node"
+
+    information:
+      - "RethinkDB web console:"
+      - "http://{{ node.public }}:8080"
+      - "Todo web application:"
+      - "http://{{ node.public }}:5000"
+      - "Troubleshooting:"
+      - "ssh ubuntu@{{ node.public }}"
+
+    appliance: 'Ubuntu 14'
+
+    cpu: "{{ parameter.cpuPerNode }}"
+    memory: "{{ parameter.memoryPerNode }}"
+
+    disks:
+      - "1 {{ parameter.diskPerNode }} standard"
+
+    glue:
+      - internet icmp 22 5000 8080
+
+    monitoring: essentials
+
+    cloud-config:
+
+      runcmd:
+
+        - echo "===== Joining the cluster"
+        - sed -i "/# join=/s/^.*$/join={{ EU7::EU7rethinkSeed.ipv6 }}/" /etc/rethinkdb/instances.d/plumbery.conf
+
+        - echo "===== Starting RethinkDB"
+        - sleep 1m
+        - service rethinkdb start
+
+        - echo "===== Starting todo application"
+        - start todo
+
+
+  cloud-config:  # apply to all nodes
+
+    hostname: "{{ node.name }}"
+
+    write_files:
+
+      - path: /root/hosts.awk
+        content: |
+          #!/usr/bin/awk -f
+
+          /^{{ EU7::EU7rethinkSeed.private }}/ {next}
+          /^{{ EU7::EU7rethinkSeed.ipv6 }}/ {next}
+
+          /^{{ EU6::EU6rethink01.private }}/ {next}
+          /^{{ EU6::EU6rethink01.ipv6 }}/ {next}
+
+          /^{{ EU7::EU7rethink01.private }}/ {next}
+          /^{{ EU7::EU7rethink01.ipv6 }}/ {next}
+
+          /^{{ EU8::EU8rethink01.private }}/ {next}
+          /^{{ EU8::EU8rethink01.ipv6 }}/ {next}
+
+          /^{{ EU9::EU9rethink01.private }}/ {next}
+          /^{{ EU9::EU9rethink01.ipv6 }}/ {next}
+
+          {print}
+          END {
+
+           print "{{ EU7::EU7rethinkSeed.private }}    EU7rethinkSeed"
+           print "{{ EU7::EU7rethinkSeed.ipv6 }}    EU7rethinkSeed"
+
+           print "{{ EU6::EU6rethink01.private }}    EU6rethink01"
+           print "{{ EU6::EU6rethink01.ipv6 }}    EU6rethink01"
+
+           print "{{ EU7::EU7rethink01.private }}    EU7rethink01"
+           print "{{ EU7::EU7rethink01.ipv6 }}    EU7rethink01"
+
+           print "{{ EU8::EU8rethink01.private }}    EU8rethink01"
+           print "{{ EU8::EU8rethink01.ipv6 }}    EU8rethink01"
+
+           print "{{ EU9::EU9rethink01.private }}    EU9rethink01"
+           print "{{ EU9::EU9rethink01.ipv6 }}    EU9rethink01"
+
+          }
+
+      - path: /root/cluster-instance.sed
+        content: |
+          #!/usr/bin/sed
+          /# server-name=/s|^.*$|server-name={{ node.name }}|
+          /# bind=/s|^.*$|bind=all|
+
+      - path: /etc/init/todo.conf
+        permissions: "0755"
+        content: |
+          start on runlevel [234]
+          stop on runlevel [0156]
+
+          setuid ubuntu
+
+          script
+              cd /home/ubuntu/rethinkdb-example-flask-backbone-todo
+              python todo.py
+          end script
+
+    packages:
+      - ntp
+      - git
+      - python-pip
+
+    runcmd:
+
+      - echo "===== Growing LVM with added disk"
+      - pvcreate /dev/sdb
+      - vgextend rootvol00 /dev/sdb
+      - lvextend -l +100%FREE /dev/mapper/rootvol00-rootlvol00
+      - resize2fs /dev/mapper/rootvol00-rootlvol00
+
+      - echo "===== Updating /etc/hosts"
+      - cp -n /etc/hosts /etc/hosts.original
+      - awk -f /root/hosts.awk /etc/hosts >/etc/hosts.new && mv /etc/hosts.new /etc/hosts
+      - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+      - echo "===== Handling ubuntu identity"
+      - cp -n /etc/ssh/ssh_host_rsa_key /home/ubuntu/.ssh/id_rsa
+      - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
+      - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
+
+      - echo "===== Installing RethinkDB"
+      - echo "deb http://download.rethinkdb.com/apt trusty main" | sudo tee /etc/apt/sources.list.d/rethinkdb.list
+      - wget -qO- https://download.rethinkdb.com/apt/pubkey.gpg | sudo apt-key add -
+      - apt-get update
+      - apt-get install -y rethinkdb
+
+      - echo "===== Configuring RethinkDB"
+      - cp -n /etc/rethinkdb/default.conf.sample /etc/rethinkdb/instances.d/plumbery.conf
+      - sed -i -f /root/cluster-instance.sed /etc/rethinkdb/instances.d/plumbery.conf
+
+      - echo "===== Installing todo application"
+      - pip install Flask
+      - pip install rethinkdb
+      - cd /home/ubuntu
+      - git clone git://github.com/rethinkdb/rethinkdb-example-flask-backbone-todo.git
+      - cd rethinkdb-example-flask-backbone-todo
+      - sed -i "/app.run(debug=True)/s/^.*$/        app.run(host='0.0.0.0', debug=True)/" todo.py
+      - chown -R ubuntu:ubuntu /home/ubuntu
+
+    ssh_keys:
+      rsa_private: |
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
+
+    users:
+      - default
+
+      - name: ubuntu
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+      - name: root
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+    disable_root: false
+    ssh_pwauth: false
+
+---
+
+locationId: EU7
+
+blueprints:
+
+  - seed:
+
+      domain:
+        name: "{{ parameter.domainName }}"
+        ipv4: auto
+
+      ethernet:
+        name: "RethinkSeedNetwork"
+        subnet: 10.70.0.0
+        accept:
+          - "EU6::{{ parameter.networkName }}"
+          - "EU7::{{ parameter.networkName }}"
+          - "EU8::{{ parameter.networkName }}"
+          - "EU9::{{ parameter.networkName }}"
+
+      nodes:
+
+        - EU7rethinkSeed:
+            default: rethink-seed
+
+  - microservice:
+
+      domain:
+        name: "{{ parameter.domainName }}"
+        ipv4: auto
+
+      ethernet:
+        name: "{{ parameter.networkName }}"
+        subnet: 10.60.0.0
+        accept:
+          - "EU7::RethinkSeedNetwork"
+          - "EU6::{{ parameter.networkName }}"
+          - "EU8::{{ parameter.networkName }}"
+          - "EU9::{{ parameter.networkName }}"
+
+      nodes:
+
+        - EU7rethink01:
+            default: rethink-node
+
+---
+
+locationId: EU6
+
+blueprints:
+
+  - microservice:
+
+      domain:
+        name: "{{ parameter.domainName }}"
+        ipv4: auto
+
+      ethernet:
+        name: "{{ parameter.networkName }}"
+        subnet: 10.60.0.0
+        accept:
+          - "EU7::RethinkSeedNetwork"
+          - "EU7::{{ parameter.networkName }}"
+          - "EU8::{{ parameter.networkName }}"
+          - "EU9::{{ parameter.networkName }}"
+
+      nodes:
+
+        - EU6rethink01:
+            default: rethink-node
+
+---
+
+locationId: EU8
+
+blueprints:
+
+  - microservice:
+
+      domain:
+        name: "{{ parameter.domainName }}"
+        ipv4: auto
+
+      ethernet:
+        name: "{{ parameter.networkName }}"
+        subnet: 10.60.0.0
+        accept:
+          - "EU7::RethinkSeedNetwork"
+          - "EU6::{{ parameter.networkName }}"
+          - "EU7::{{ parameter.networkName }}"
+          - "EU9::{{ parameter.networkName }}"
+
+      nodes:
+
+        - EU8rethink01:
+            default: rethink-node
+
+---
+
+locationId: EU9
+
+blueprints:
+
+  - microservice:
+
+      domain:
+        name: "{{ parameter.domainName }}"
+        ipv4: auto
+
+      ethernet:
+        name: "{{ parameter.networkName }}"
+        subnet: 10.60.0.0
+        accept:
+          - "EU7::RethinkSeedNetwork"
+          - "EU6::{{ parameter.networkName }}"
+          - "EU7::{{ parameter.networkName }}"
+          - "EU8::{{ parameter.networkName }}"
+
+      nodes:
+
+        - EU9rethink01:
+            default: rethink-node

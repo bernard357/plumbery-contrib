@@ -56,10 +56,11 @@
 
 ## Database services
 
-- [MySQL replication over IPv6 back-end network](database/mysql-master-slave)
-- [Cluster of Redis servers](database/redis-cluster)
+- [RethinkDB, geo-distributed JSON store](database/rethink-distributed)
 - [Cluster of MongoDB servers](database/mongodb-cluster)
 - [Cassandra ring with 5 nodes](database/cassandra-cluster)
+- [Cluster of Redis servers](database/redis-cluster)
+- [MySQL replication over IPv6 back-end network](database/mysql-master-slave)
 
 ## Logging services
 
