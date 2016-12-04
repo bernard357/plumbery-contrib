@@ -57,8 +57,7 @@ to help you move forward. You can retrieve this information at any time with the
     $ python -m plumbery fittings.yaml information
 
 In this demonstration, you only need a web browser to administrate the cluster, and to use the application.
-Check links provided by plumbery. On the first link you will access the web console
-of the seeding node.
+Check links provided by plumbery. The first link will drive you to the web console.
 
     https://<public_ip_address_of_EU7rethinkSeed>:8080
 
@@ -78,7 +77,7 @@ When this step is completed, you get a fully distributed JSON storage engine of 
 
 ![table](docs/table.png)
 
-Now that the infrastructure is up and running, we will use for real in a small web application. The web front-end has been installed at every node, so you can use any public IP address mentioned by plumbery. We will start with the endpoint in Amsterdam:
+Now that the infrastructure is up and running, we will use it for real in a small web application. The web front-end has been installed at every node, so you can use any public IP address mentioned by plumbery. We will check the endpoint in Amsterdam:
 
     https://<public_ip_address_of_EU7rethink01>:5000
 
@@ -93,7 +92,7 @@ As an example, you could add every step required for the production of delicious
 - slice potatoes
 - fry potatoes
 
-The interface is updated progressively, and data is replicated across the cluster in the background. We prove it with another web browser pointed to the endpoint in another location, let say, Brussels:
+The interface is updated progressively, and data is replicated across the cluster in the background. We prove it with another web browser window pointed to another location, let say, Brussels:
 
     https://<public_ip_address_of_EU9rethink01>:5000
 
@@ -101,7 +100,9 @@ The list displayed in Brussels is reflecting data entered in Amsterdam.
 
 ![completed todos](docs/todo_fries.png)
 
-Of course, additional changes in Brussels are reflected to Asmterdam too. Check 2 or 3 items, then reload the page on Dutch side to show evidence of it.
+Of course, additional changes in Brussels are reflected back to Asmterdam. Check 2 or 3 items of the todo list, then reload the page on Dutch side to show evidence of it.
+
+![checked todos](docs/todo_checked.png)
 
 ## Destruction commands
 
