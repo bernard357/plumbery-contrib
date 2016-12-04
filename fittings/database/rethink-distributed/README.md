@@ -7,32 +7,32 @@
 The objective here is to deploy multiple RethinkDB servers, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
 This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
-With this use case we prepare a ready-to-use geo-distributed cluster of 5 rethinkDB nodes. One node is used to bootstrap the cluster. The four other nodes implemented a distributed database that is replicated automatically. A small demo web application is installed at all nodes.
+With this use case we prepare a ready-to-use geo-distributed cluster of 5 RethinkDB nodes. One node is used to bootstrap the cluster. The four other nodes implement a distributed database that is replicated automatically. A small demo web application is installed at all nodes for distributed access.
 
 ![Architecture](docs/architecture.png)
 
-Synchronisation trafic across nodes is taking place over the private IPv6 infrastructure that connects all MCP locations. Then each web application is given a public IP4 address to handle traffic coming from local Internet users.
+Synchronisation across nodes is taking place over the private IPv6 infrastructure that connects all MCP locations. Moreover, each web endpoint is given a public IP4 address, so that it can handle traffic coming from local Internet users.
 
 This design delivers a fault-tolerant real-time application where data is replicated asynchronously, and multiple application endpoints are available.
 
 ## Requirements for this use case
 
-* Select multiple MCP locations
-* Add a Network Domain to each MCP locations
+* Select multiple MCP locations: EU6, EU7, EU8 and EU9
+* Add a Network Domain to each MCP location
 * Add two Ethernet networks to the Amsterdam location, and one Ethernet network to others
-* Deploy 1 Ubuntu node to each network
+* Deploy 1 Ubuntu node at each network
 * Provide enough CPU, RAM and disk to each node, as defined by parameters
 * Monitor nodes in the real-time dashboard provided by Dimension Data
-* Add firewall rules to allow private IPv6 traffic between MCP locations
+* Add firewall rules to allow private IPv6 traffic between involved networks
 * Assign a public IPv4 address to each node
 * Add address translation to ensure end-to-end IP connectivity over Internet
-* Add firewall rules to accept TCP traffic for ssh and for web consoles
-* Expand system storage (LVM) with additional disk
-* Update the operating system
-* Synchronise node clock with NTP
+* Add firewall rules to accept TCP traffic for ssh and for web access
+* Expand system storage (LVM) of each node with additional disk
+* Update the operating system of each node
+* Synchronise node clocks with NTP
 * Install a new SSH key to secure remote communications
-* Configure SSH to reject passwords and to prevent access from root account
-* Update `etc/hosts` and `hostname` to bind network addresses to host names
+* Configure SSH to reject password authentication
+* Update `etc/hosts` and `hostname` to bind network addresses with host names
 * Install RethinkDB at each node
 * Install a demo web application at each node
 * From the seeding node, create a database for the web application
@@ -45,28 +45,26 @@ This design delivers a fault-tolerant real-time application where data is replic
 
     $ python -m plumbery fittings.yaml deploy
 
-This command will build fittings as per the provided plan, start the cluster
-and bootstrap it. Look at messages displayed by plumbery while it is
+This command builds fittings as per the provided plan, starts the cluster
+and bootstraps it. Look at messages displayed by plumbery while it is
 working, so you can monitor what's happening.
 
 ## Follow-up commands
 
 At the end of the deployment, plumbery will display some instructions
-to help you move forward. You can ask plumbery to display this information
-at any time with the following command:
+to help you move forward. You can retrieve this information at any time with the following command:
 
     $ python -m plumbery fittings.yaml information
 
-
-In this demonstration, you will use a web browser to administrate the cluster, and to use the application.
-Copy and paste the first two links displayed by plumbery. On the first link you will access the web console
+In this demonstration, you only need a web browser to administrate the cluster, and to use the application.
+Check links provided by plumbery. On the first link you will access the web console
 of the seeding node.
 
     https://<public_ip_address_of_EU7rethinkSeed>:8080
 
 There you access the main management dashboard of the cluster.
 
-![console](docs/console.png)
+![console](docs/dashboard.png)
 
 Click on the Servers tab and check that all servers are contributing to the cluster over private IPv6.
 
@@ -76,7 +74,7 @@ Click on the Tables tab and select the todo table. Then click on the Reconfigure
 
 ![add replicas](docs/add_replicas.png)
 
-After the replication of data across all nodes you get a fully distributed geo-cluster of 5 nodes across 4 different locations.
+When this step is completed, you get a fully distributed JSON storage engine of 5 nodes across 4 different locations.
 
 ![table](docs/table.png)
 
