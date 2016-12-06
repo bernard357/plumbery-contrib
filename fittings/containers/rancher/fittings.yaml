@@ -100,7 +100,7 @@ defaults:
             #!/bin/sh
             export MCP_USERNAME="{{ environment.MCP_USERNAME }}"
             export MCP_PASSWORD="{{ environment.MCP_PASSWORD }}"
-            export MCP_SSH_BOOTSTRAP_PASSWORD="{{ environment.MCP_SSH_BOOTSTRAP_PASSWORD }}"
+            export SHARED_SECRET="{{ environment.SHARED_SECRET }}"
 
         - path: /root/host_registration.py
           permissions: "0755"
