@@ -98,9 +98,32 @@ defaults:
           permissions: "0755"
           content: |
             #!/bin/sh
-            export MCP_USER="{{ environment.MCP_USER }}"
+            export MCP_USERNAME="{{ environment.MCP_USERNAME }}"
             export MCP_PASSWORD="{{ environment.MCP_PASSWORD }}"
             export MCP_SSH_BOOTSTRAP_PASSWORD="{{ environment.MCP_SSH_BOOTSTRAP_PASSWORD }}"
+
+        - path: /root/host_registration.py
+          permissions: "0755"
+          content: |
+            import json
+            import requests
+            import time
+
+            # get project id
+            time.sleep(10)
+            url='http://{{ rancher-01.public }}:8080/v1/projects'
+            response = requests.get(url=url)
+            project_id = response.json()['data'][0]['id']
+
+            # get registration link
+            url='http://{{ rancher-01.public }}:8080/v1/projects/'+project_id+'/registrationtokens'
+            response = requests.post(url=url)
+            url = response.json()['links']['self']
+
+            # get registration commmand
+            time.sleep(10)
+            response = requests.get(url=url)
+            print(response.json()['command'])
 
       runcmd:
 
@@ -177,6 +200,21 @@ blueprints:
 
               runcmd:
 
+                - echo "===== Adding Rancher"
+                - docker run -d --restart=always -p 8080:8080 rancher/server
+                - docker pull rancher/agent
+
+                - echo "===== Registering this host"
+                - python /root/host_registration.py | sh
+
+                - echo "===== Adding Rancher CLI"
+                - cd /root
+                - wget -nv https://github.com/rancher/cli/releases/download/v0.3.1/rancher-linux-amd64-v0.3.1.tar.gz
+                - tar xvf rancher-linux-amd64-v0.3.1.tar.gz
+                - rm -f rancher-linux-amd64-v0.3.1.tar.gz
+                - mv /root/rancher-v0.3.1/rancher /usr/local/bin/
+                - rm -R rancher-v0.3.1/
+
                 - echo "===== Installing Docker Machine"
                 - curl -L https://github.com/docker/machine/releases/download/v0.9.0-rc1/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine
                 - chmod +x /usr/local/bin/docker-machine
@@ -192,18 +230,6 @@ blueprints:
                 - mv /root/_bin/linux-amd64/docker-machine-driver-ddcloud /usr/local/bin/
                 - rm -R _bin
 
-                - echo "===== Adding Rancher"
-                - docker run -d --restart=always -p 8080:8080 rancher/server
-                - docker pull rancher/agent
-
-                - echo "===== Adding Rancher CLI"
-                - cd /root
-                - wget -nv https://github.com/rancher/cli/releases/download/v0.3.1/rancher-linux-amd64-v0.3.1.tar.gz
-                - tar xvf rancher-linux-amd64-v0.3.1.tar.gz
-                - rm -f rancher-linux-amd64-v0.3.1.tar.gz
-                - mv /root/rancher-v0.3.1/rancher /usr/local/bin/
-                - rm -R rancher-v0.3.1/
-
         - rancher-0[2..3]:
             default: rancher-node
 
@@ -211,5 +237,13 @@ blueprints:
 
             information:
               - "ssh ubuntu@{{ node.public }}"
+
+            cloud-config:
+
+              runcmd:
+
+                - echo "===== Registering this host"
+                - sleep 2m
+                - python /root/host_registration.py | sh
 
 
