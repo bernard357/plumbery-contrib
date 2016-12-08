@@ -2,10 +2,10 @@
 
 ![Tuleap](tuleap.png)
 
-[Tuleap](https://www.tuleap.org/) is a software platform for project management that enables managers and developers to utilize diverse development methodologies including Agile, traditional, or hybrid or custom processes. It helps organizations meet industry standards like Capability Maturity Model Integration (CMMI) and ITIL. Tuleap facilitates the planning of software releases, the prioritization of business requirements, the assignment of tasks to project members, the monitoring of project progress, and the creation of reports.[7] It features site-wide trackers and real-time reports on risks, requirements, tasks, bugs, change requests, support requests, user stories.[8] It supports Kanban, Scrum, and hybrid methodologies in project management.
+[Tuleap](https://www.tuleap.org/) is a software platform for [Application Lifecycle Management (ALM)](https://en.wikipedia.org/wiki/Application_lifecycle_management) that enables managers and developers to utilize diverse development methodologies including Agile, traditional, or hybrid or custom processes. It helps organizations meet industry standards like [Capability Maturity Model Integration (CMMI)](https://en.wikipedia.org/wiki/Capability_Maturity_Model_Integration) and [ITIL](https://en.wikipedia.org/wiki/ITIL). Tuleap facilitates the planning of software releases, the prioritization of business requirements, the assignment of tasks to project members, the monitoring of project progress, and the creation of reports. It features site-wide trackers and real-time reports on risks, requirements, tasks, bugs, change requests, support requests, user stories. It supports [Kanban](https://en.wikipedia.org/wiki/Kanban), [Scrum](https://en.wikipedia.org/wiki/Scrum_(software_development)), and hybrid methodologies in project management.
 
 
-The objective of this use case is to deploy a Tuleap server, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
+The objective of this use case is to deploy a ready-to-use Tuleap server, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
 This is done with [plumbery](https://docs.mcp-services.net/display/PLUM/Plumbery) and a template that is provided below.
 
 ## Requirements for this use case
@@ -47,12 +47,13 @@ at any time with the following command:
     $ python -m plumbery fittings.yaml information
 
 Open a browser window and paste the public address reported by plumbery.
-You should receive a welcome HTML page in return.
+You should receive a welcome page in return.
 
 ![index](index.png)
 
 From there you can create an account and start a first project.
-Check [Tuleap Tutorials, Tips & Tricks](https://www.tuleap.org/tuleap-tutos-tips-tricks) for a quick start.
+
+If you are new to integrated application lifecycle management and to this system then check [Tuleap Tutorials, Tips & Tricks](https://www.tuleap.org/tuleap-tutos-tips-tricks) for a quick start.
 
 ## Destruction commands
 
