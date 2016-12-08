@@ -19,9 +19,10 @@
 
 ## Application services
 
-- [WordPress blogging server](applications/wordpress)
-- [Confluence server from Atlassian](applications/confluence)
+- [Tuleap server, agile project management from Enalean](applications/tuleap)
 - [iTop Community from Combodo, for open-source ITSM](applications/itop)
+- [Confluence server from Atlassian](applications/confluence)
+- [WordPress blogging server](applications/wordpress)
 
 ## Collaboration services
 

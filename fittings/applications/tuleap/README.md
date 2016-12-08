@@ -1,6 +1,6 @@
 # Tuleap server, agile project management from Enalean
 
-![Tuleap](tuleap.jpg)
+![Tuleap](tuleap.png)
 
 [Tuleap](https://www.tuleap.org/) is a software platform for project management that enables managers and developers to utilize diverse development methodologies including Agile, traditional, or hybrid or custom processes. It helps organizations meet industry standards like Capability Maturity Model Integration (CMMI) and ITIL. Tuleap facilitates the planning of software releases, the prioritization of business requirements, the assignment of tasks to project members, the monitoring of project progress, and the creation of reports.[7] It features site-wide trackers and real-time reports on risks, requirements, tasks, bugs, change requests, support requests, user stories.[8] It supports Kanban, Scrum, and hybrid methodologies in project management.
 
