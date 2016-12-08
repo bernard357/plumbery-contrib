@@ -1,0 +1,157 @@
+---
+
+information:
+  - "Tuleap server, agile project management from Enalean"
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU7
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: TuleapFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: TuleapNetwork
+
+  nodeName:
+    information:
+      - "the name of the main node to be deployed"
+    type: str
+    default: tuleap-01
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/applications/tuleap
+  credit: https://www.tuleap.org/full-installation
+
+defaults:
+
+  cloud-config:
+
+    ssh_keys:
+      rsa_private: |
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
+
+    users:
+      - default
+
+      - name: centos
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+      - name: root
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+    disable_root: false
+    ssh_pwauth: false
+
+---
+
+locationId: "{{ parameter.locationId }}"
+
+blueprints:
+
+  - single-node:
+
+      domain:
+        name: "{{ parameter.domainName }}"
+        service: essentials
+        ipv4: 2
+
+      ethernet:
+        name: "{{ parameter.networkName }}"
+        subnet: 192.168.20.0
+
+      nodes:
+
+        - "{{ parameter.nodeName }}":
+
+            information:
+              - "connect remotely with a browser:"
+              - "http://{{ node.public }}/"
+              - "if troubleshooting is needed:"
+              - "ssh centos@{{ node.public }}"
+
+            appliance: 'CentOS 6'
+            cpu: 2
+            memory: 4
+
+            disks:
+              - 1 50 standard
+
+            glue:
+              - internet 22 80 443
+
+            monitoring: essentials
+
+            cloud-config:
+
+              packages:
+                - ntp
+                - epel-release
+                - expect
+
+              write_files:
+
+                - path: /etc/yum.repos.d/Tuleap.repo
+                  content: |
+                    [Tuleap]
+                    name=Tuleap
+                    baseurl=http://ci.tuleap.net/yum/tuleap/rhel/6/dev/$basearch
+                    enabled=1
+                    gpgcheck=0
+
+                - path: /root/tuleap-install
+                  permissions: "0700"
+                  content: |
+                    #!/bin/sh
+                    export USER="root"
+                    export HOME="/root"
+                    /usr/bin/expect <<EOF
+                    spawn "/usr/share/tuleap-install/setup.sh"
+                    expect "Tuleap domain name: (e.g. mytuleap.example.com):"
+                    send "{{ node.public }}\r"
+                    expect "Your company name: (e.g. My Company):"
+                    send "plumbery\r"
+                    expect eof
+                    exit
+                    EOF
+
+              runcmd:
+
+                - echo "===== Growing LVM with added disk"
+                - pvcreate /dev/sdb
+                - vgextend rootvol00 /dev/sdb
+                - lvextend -l +100%FREE /dev/mapper/rootvol00-rootlvol00
+                - resize2fs /dev/mapper/rootvol00-rootlvol00
+
+                - echo "===== Handling centos identity"
+                - cp -n /etc/ssh/ssh_host_rsa_key /home/centos/.ssh/id_rsa
+                - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/centos/.ssh/id_rsa.pub
+                - chown centos:centos /home/centos/.ssh/*
+                - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+                - echo "===== Installing Tuleap"
+                - cd /root
+                - yum update -y
+                - yum install -y tuleap-all tuleap-plugin-git-gitolite3
+
+                - echo "===== Configuring Tuleap"
+                - /root/tuleap-install
+
+
