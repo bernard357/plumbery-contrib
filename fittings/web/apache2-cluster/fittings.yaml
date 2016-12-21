@@ -70,22 +70,81 @@ blueprints:
         name: "{{ parameter.networkName }}"
         subnet: 10.0.0.0
 
-      nodes:
+      # all nodes of this blueprint are put in the same pool
+      #
+      pool:
 
-        - web[1..10]:
+        # you have the choice:
+        # - random
+        # - round_robin
+        # - least_connections
+        # - weighted_round_robin
+        # - weighted_least_connections
+        # - shortest_response
+        # - persistent_ip
+        #
+        algorithm: random
 
-            description: '#apache #ubuntu'
+      # how you want to use nodes put in pool
+      #
+      balancers:
+
+        # balance web traffic from the internet
+        # a public IP address is assigned automatically to each listener
+        #
+        - http:
 
             information:
+              - "http://{{ balancer.ip }}:{{ balancer.port }}"
+
+            protocol: http
+            port: 80
+
+        - https:
+
+            information:
+              - "https://{{ balancer.ip }}:{{ balancer.port }}"
+
+            protocol: http
+            port: 443
+
+        # balance web traffic on a fixed ip address
+        #
+        - http-fixed:
+
+            information:
+              - "http://{{ balancer.ip }}:{{ balancer.port }}"
+
+            protocol: http
+            address: 10.1.2.3
+            port: 80
+
+
+      # all these servers will be put in the pool
+      #
+      nodes:
+
+        # multiple web servers with the same settings
+        #
+        - web-0[1..9]:
+
+            information:
+              - "http://{{ node.public }}"
               - "ssh ubuntu@{{ node.public }}"
 
             appliance: 'Ubuntu 14'
 
+            # each server is accessible over ssh and http
+            #
             glue:
-              - internet 22
+              - internet 22 80
 
+            # each server is monitored in the dashboard
+            #
             monitoring: essentials
 
+            # minimum system commands to get a working web server
+            #
             cloud-config:
 
               packages:
@@ -117,10 +176,3 @@ blueprints:
 
                 - echo "===== Providing PHP web index page"
                 - mv /var/www/html/index.html /var/www/html/index.html.deprecated
-
-      listeners:
-
-        - http:
-            port: 80
-            protocol: http
-            algorithm: round_robin
