@@ -313,7 +313,7 @@ defaults:
 
       - echo "===== Installing Hadoop"
       - cd /tmp/
-      - wget -q http://apache.trisect.eu/hadoop/common/hadoop-2.7.2/hadoop-2.7.2.tar.gz
+      - wget -q http://apache.mediamirrors.org/hadoop/common/hadoop-2.7.2/hadoop-2.7.2.tar.gz
       - tar -xzf hadoop-2.7.2.tar.gz
       - mkdir -p /opt/hadoop
       - mv hadoop-2.7.2/* /opt/hadoop
